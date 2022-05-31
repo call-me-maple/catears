@@ -16,4 +16,4 @@ RUN go mod vendor \
  && apk del build
 
 #CMD ["./main"] \
-CMD ["/bin/sh"]
+RUN ["/bin/sh"]
