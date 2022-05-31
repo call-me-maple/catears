@@ -25,7 +25,9 @@ func main() {
 
 	// Create a new Discord session using the provided bot token.
 	if Token == "" {
+		fmt.Println("no -t arg found checking BOT_TOKEN env variable")
 		Token = os.Getenv("BOT_TOKEN")
+		fmt.Println("found:", Token)
 	}
 
 	dg, err := discordgo.New("Bot " + Token)
