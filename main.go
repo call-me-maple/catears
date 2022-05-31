@@ -25,9 +25,7 @@ func main() {
 
 	// Create a new Discord session using the provided bot token.
 	if Token == "" {
-		fmt.Println("no -t arg found checking BOT_TOKEN env variable")
 		Token = os.Getenv("BOT_TOKEN")
-		fmt.Println("found:", Token)
 	}
 
 	dg, err := discordgo.New("Bot " + Token)
@@ -63,7 +61,6 @@ func messageReact(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
 
 	// Only run on check mark emoji
 	if m.Emoji.Name != "✅" {
-		fmt.Println("wrong reaction, not ✅")
 		return
 	}
 
@@ -85,30 +82,28 @@ func messageReact(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
 
 	// Only move from backlog
 	if m.ChannelID != backlog.ID {
-		fmt.Println("reaction in wrong channel")
 		return
 	}
 
 	// Check for link in message
 	message, err := s.ChannelMessage(m.ChannelID, m.MessageID)
 	if err != nil {
-		fmt.Println("failed to grab message")
+		fmt.Println("failed to grab message", err)
 		return
 	}
 	if len(message.Embeds) == 0 {
-		fmt.Println("no url in message")
 		return
 	}
 	// Delete old message in backlog
 	err = s.ChannelMessageDelete(backlog.ID, m.MessageID)
 	if err != nil {
-		fmt.Printf("failed to delete old message, %v\n", err)
+		fmt.Println("failed to delete old message", err)
 		return
 	}
 	// Create new message in history
 	_, err = s.ChannelMessageSend(history.ID, message.Content)
 	if err != nil {
-		fmt.Printf("failed to send new message, %v\n", err)
+		fmt.Println("failed to send new message", err)
 		return
 	}
 }

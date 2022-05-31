@@ -15,4 +15,5 @@ RUN go mod vendor \
  && go build main.go \
  && apk del build
 
-CMD ["./main"]
+#CMD ["./main"] \
+CMD ["/bin/sh"]
