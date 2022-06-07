@@ -153,6 +153,9 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		if strings.Contains(m.Content, "r?") {
 			s.MessageReactionAdd(m.ChannelID, m.ID, "✅")
 		}
+		if strings.Contains(m.Content, "gm") {
+			s.MessageReactionAdd(m.ChannelID, m.ID, "😺")
+		}
 		if strings.Contains(m.Content, "music?") {
 			go func() {
 				channels, err := s.GuildChannels(m.GuildID)
