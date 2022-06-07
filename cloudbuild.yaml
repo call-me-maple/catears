@@ -1,0 +1,4 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args: [ 'build', '-t', 'gcr.io/evident-galaxy-193006/catears:latest', '.' ]
+images: ['gcr.io/evident-galaxy-193006/catears:latest']
