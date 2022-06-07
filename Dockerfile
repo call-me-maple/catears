@@ -1,18 +1,28 @@
-FROM golang:1.18-alpine
+##
+## Build
+##
+FROM golang:1.18-buster AS build
 
-WORKDIR /opt/catearsbot
+WORKDIR /app
 
-RUN apk update \
- && apk add --no-cache \
-            --virtual build \
-            gcc \
-            git \
-            musl-dev
+COPY go.mod ./
+COPY go.sum ./
 
-COPY . .
+RUN go mod download
 
-RUN go mod vendor \
- && go build main.go \
- && apk del build
+COPY *.go ./
 
-CMD ["./main"]
+RUN go build -o /ce
+
+##
+## Deploy
+##
+FROM gcr.io/distroless/base-debian10
+
+WORKDIR /
+
+COPY --from=build /ce /ce
+
+USER nonroot:nonroot
+
+ENTRYPOINT ["/ce"]
