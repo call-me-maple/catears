@@ -1,4 +1,4 @@
-module catears
+module github.com/call-me-maple/catears
 
 go 1.18
 
