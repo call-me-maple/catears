@@ -5,8 +5,4 @@ steps:
   # Push the container image to Container Registry
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'gcr.io/evident-galaxy-193006/catears']
-  # Deploy container image to Cloud Run
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: gcloud
-    args: [ 'run', 'deploy', 'catears', '--image', 'gcr.io/evident-galaxy-193006/catears', '--region', 'us-central1' ]
 images: ['gcr.io/evident-galaxy-193006/catears:latest']
