@@ -64,7 +64,18 @@ func processReaction(r *bokchoy.Request) (err error) {
 	case isBotMentioned(me.Mentions) && strings.Contains(me.Content, "r?") && allReady(me.Reactions):
 		err = countDown(me)
 	case isBHNotify(me.Content) && isUserMentioned(me.Mentions, m.UserID) && !hasBotReacted(me.Reactions, "✅"):
-		err = sendBH(m.ChannelID, m.MessageID, m.UserID, &BHOptions{Seeds: 10})
+		err = sendBH(&BHOptions{
+			Seeds:     10,
+			ChannelID: m.ChannelID,
+			MessageID: m.MessageID,
+			UserID:    m.UserID})
+	case isHerbNotify(me.Content) && isUserMentioned(me.Mentions, m.UserID) && !hasBotReacted(me.Reactions, "✅"):
+		err = sendHerb(&HerbOptions{
+			Stage:     0,
+			ChannelID: m.ChannelID,
+			MessageID: m.MessageID,
+			UserID:    m.UserID,
+		})
 	case len(me.Embeds) != 0 && m.Emoji.Name == "✅":
 		err = archive(m)
 	}
@@ -88,6 +99,10 @@ func processMessage(r *bokchoy.Request) (err error) {
 		err = findMusic(m)
 	case isCommand(m.Content, "bh") && isBotMentioned(m.Mentions):
 		err = runBirdHouse(m)
+	case isCommand(m.Content, "herb") && isBotMentioned(m.Mentions):
+		err = runHerb(m)
+	case isCommand(m.Content, "config") && isBotMentioned(m.Mentions):
+		err = runConfig(m)
 	case isBotMentioned(m.Mentions):
 		err = respondToMention(m)
 	default:
@@ -109,6 +124,7 @@ func sendMessage(r *bokchoy.Request) (err error) {
 	}
 	sent, err := dg.ChannelMessageSendComplex(m.ChannelID, m.MessageSend)
 	if err != nil {
+		log.Printf("%v\n%v\n", err, m)
 		return err
 	}
 	log.Println("sent message:", sent.Content)

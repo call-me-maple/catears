@@ -2,7 +2,7 @@ version: '3.8'
 services:
   catears:
     build: .
-    image: gcr.io/evident-galaxy-193006/ce
+    image: gcr.io/evident-galaxy-193006/catears
     restart: always
     depends_on:
       - redis

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"github.com/bwmarrin/discordgo"
+	"github.com/go-redis/redis/v7"
 	"github.com/oklog/run"
 	"github.com/thoas/bokchoy"
 	"log"
@@ -15,6 +16,7 @@ var (
 	messageSend    *bokchoy.Queue
 	messageReact   *bokchoy.Queue
 	dg             *discordgo.Session
+	client         *redis.Client
 )
 
 func main() {
@@ -43,18 +45,14 @@ func main() {
 	}
 	{
 		ctx, cancel := context.WithCancel(context.Background())
-		engine, err := bokchoy.New(ctx, bokchoy.Config{
-			Broker: bokchoy.BrokerConfig{
-				Type: "redis",
-				Redis: bokchoy.RedisConfig{
-					Type: "client",
-					Client: bokchoy.RedisClientConfig{
-						Addr:     os.Getenv("REDIS_ADDR"),
-						Password: os.Getenv("REDIS_PASSWORD"),
-					},
-				},
-			},
+		client = redis.NewClient(&redis.Options{
+			Addr:     os.Getenv("REDIS_ADDR"),
+			Password: os.Getenv("REDIS_PASSWORD"),
 		})
+		// Logger nil seems weird
+		engine, err := bokchoy.New(ctx, bokchoy.Config{},
+			bokchoy.WithBroker(bokchoy.NewRedisBroker(client, "client", "", nil)))
+
 		if err != nil {
 			log.Println("error opening redis connection,", err)
 			return
@@ -67,6 +65,7 @@ func main() {
 		messageSend.HandleFunc(sendMessage)
 		messageReact = engine.Queue(os.Getenv("MSG_REACT_QUEUE"))
 		messageReact.HandleFunc(sendReaction)
+
 		g.Add(func() error {
 			return engine.Run(ctx)
 		}, func(error) {

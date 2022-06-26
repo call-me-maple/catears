@@ -19,13 +19,39 @@ func isCommand(content, keyword string) bool {
 	return strings.Contains(content, keyword+" ") || strings.HasSuffix(content, keyword)
 }
 
+func splitCommand(content, keyword string) []string {
+	str := strings.TrimSpace(content)
+	_, after, _ := strings.Cut(str, keyword+" ")
+	return strings.Split(after, " ")
+}
+
+func isConfigKey(key string) bool {
+	// TODO: Read keys from redis?
+	var keys = []string{"offset"}
+	for _, k := range keys {
+		if key == k {
+			return true
+		}
+	}
+	return false
+}
+
 func isBHNotify(content string) bool {
 	return strings.Contains(content, "Bird houses are ready!")
+}
+
+func isHerbNotify(content string) bool {
+	return strings.Contains(content, "Herbs are grown!")
 }
 
 func reactFollowUp(m *discordgo.Message) {
 	switch {
 	case isBHNotify(m.Content):
+		err := publishReaction(m.ChannelID, m.ID, "🔁")
+		if err != nil {
+			return
+		}
+	case isHerbNotify(m.Content):
 		err := publishReaction(m.ChannelID, m.ID, "🔁")
 		if err != nil {
 			return
