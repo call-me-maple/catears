@@ -31,6 +31,7 @@ func runBirdHouse(m *discordgo.MessageCreate) (err error) {
 		if err != nil {
 			return
 		}
+		return
 	}
 	err = sendBH(options)
 	if err != nil {
@@ -63,6 +64,15 @@ func parseBH(str string, options *BHOptions) (err error) {
 	if err != nil {
 		err = errors.Errorf("%v", buf.String())
 		return
+	}
+	return options.validate()
+}
+
+func (options *BHOptions) validate() (err error) {
+	switch {
+	case options.Seeds > 0 && options.Seeds <= 10:
+	default:
+		return errors.Errorf("Seeds must be between 1-10.")
 	}
 	return
 }

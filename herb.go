@@ -23,7 +23,7 @@ type HerbOptions struct {
 
 func runHerb(m *discordgo.MessageCreate) (err error) {
 	options := &HerbOptions{
-		Stage:     0,
+		Stage:     1,
 		ChannelID: m.ChannelID,
 		MessageID: m.ID,
 		UserID:    m.Author.ID,
@@ -35,6 +35,7 @@ func runHerb(m *discordgo.MessageCreate) (err error) {
 		if err != nil {
 			return
 		}
+		return
 	}
 	err = sendHerb(options)
 	if err != nil {
@@ -71,8 +72,8 @@ func sendHerb(o *HerbOptions) (err error) {
 		return err
 	}
 
-	// 4 growth stages for herbs
-	growthTimes := parse.NextN(time.Now(), 4-o.Stage)
+	// 5 growth stages for herbs
+	growthTimes := parse.NextN(time.Now(), 5-o.Stage)
 	finish := growthTimes[len(growthTimes)-1]
 	wait := finish.Sub(time.Now())
 	log.Printf("herbs done in: %v at: %v\n", wait, growthTimes[len(growthTimes)-1])
@@ -93,11 +94,20 @@ func parseHerb(str string, options *HerbOptions) (err error) {
 
 	cmd := flag.NewFlagSet("herb", flag.ContinueOnError)
 	cmd.SetOutput(buf)
-	cmd.UintVar(&options.Stage, "s", 0, "The current growth stage.")
+	cmd.UintVar(&options.Stage, "s", 1, "The current growth stage. 1-4")
 	err = cmd.Parse(splitCommand(str, "herb"))
 	if err != nil {
 		err = errors.Errorf("%v", buf.String())
 		return
+	}
+	return options.validate()
+}
+
+func (options *HerbOptions) validate() (err error) {
+	switch {
+	case options.Stage >= 1 && options.Stage < 5:
+	default:
+		return errors.Errorf("Growth stage must be between 1-4.")
 	}
 	return
 }
