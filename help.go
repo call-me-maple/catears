@@ -36,22 +36,32 @@ func isConfigKey(key string) bool {
 	return false
 }
 
-func isBHNotify(m *discordgo.Message) bool {
-	return strings.Contains(m.Content, "Bird houses are ready!") && len(m.Mentions) != 0
+func isBHNotify(m *discordgo.Message, userID string) (b bool) {
+	if userID != "" {
+		b = isUserMentioned(m.Mentions, userID)
+	} else {
+		b = true
+	}
+	return b && strings.Contains(m.Content, "Bird houses are ready!") && m.Author.ID == dg.State.User.ID
 }
 
-func isHerbNotify(m *discordgo.Message) bool {
-	return strings.Contains(m.Content, "Herbs are grown!") && len(m.Mentions) != 0
+func isHerbNotify(m *discordgo.Message, userID string) (b bool) {
+	if userID != "" {
+		b = isUserMentioned(m.Mentions, userID)
+	} else {
+		b = true
+	}
+	return b && strings.Contains(m.Content, "Herbs are grown!") && m.Author.ID == dg.State.User.ID
 }
 
 func reactFollowUp(m *discordgo.Message) {
 	switch {
-	case isBHNotify(m):
+	case isBHNotify(m, ""):
 		err := publishReaction(m.ChannelID, m.ID, "🔁")
 		if err != nil {
 			return
 		}
-	case isHerbNotify(m):
+	case isHerbNotify(m, ""):
 		err := publishReaction(m.ChannelID, m.ID, "🔁")
 		if err != nil {
 			return

@@ -64,14 +64,14 @@ func processReaction(r *bokchoy.Request) (err error) {
 	case isCommand(me, "r?") && allReady(me.Reactions):
 		err = countDown(me)
 	// Bird House repeat check
-	case isBHNotify(me) && hasUserReacted(me.Reactions, mr.UserID, "🔁") && !hasBotReacted(me.Reactions, "✅"):
+	case isBHNotify(me, mr.UserID) && mr.Emoji.Name == "🔁" && !hasBotReacted(me.Reactions, "✅"):
 		err = sendBH(&BHOptions{
 			Seeds:     10,
 			ChannelID: mr.ChannelID,
 			MessageID: mr.MessageID,
 			UserID:    mr.UserID})
 	// Herb repeat check
-	case isHerbNotify(me) && hasUserReacted(me.Reactions, mr.UserID, "🔁") && !hasBotReacted(me.Reactions, "✅"):
+	case isHerbNotify(me, mr.UserID) && mr.Emoji.Name == "🔁" && !hasBotReacted(me.Reactions, "✅"):
 		err = sendHerb(&HerbOptions{
 			Stage:     0,
 			ChannelID: mr.ChannelID,
