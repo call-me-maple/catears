@@ -37,11 +37,11 @@ func isConfigKey(key string) bool {
 }
 
 func isBHNotify(m *discordgo.Message) bool {
-	return strings.Contains(m.Content, "Bird houses are ready!") && isUserMentioned(m.Mentions, m.Author.ID)
+	return strings.Contains(m.Content, "Bird houses are ready!") && len(m.Mentions) != 0
 }
 
 func isHerbNotify(m *discordgo.Message) bool {
-	return strings.Contains(m.Content, "Herbs are grown!") && isUserMentioned(m.Mentions, m.Author.ID)
+	return strings.Contains(m.Content, "Herbs are grown!") && len(m.Mentions) != 0
 }
 
 func reactFollowUp(m *discordgo.Message) {

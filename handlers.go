@@ -45,15 +45,15 @@ func reactionCreated(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 
 func processReaction(r *bokchoy.Request) (err error) {
 	res := fmt.Sprintf("%v", r.Task.Payload)
-	m := new(discordgo.MessageReactionAdd)
-	err = json.Unmarshal([]byte(res), &m)
+	mr := new(discordgo.MessageReactionAdd)
+	err = json.Unmarshal([]byte(res), &mr)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
 
 	// Query full message info
-	me, err := dg.ChannelMessage(m.ChannelID, m.MessageID)
+	me, err := dg.ChannelMessage(mr.ChannelID, mr.MessageID)
 	if err != nil {
 		fmt.Println("failed to grab message", err)
 		return
@@ -64,23 +64,23 @@ func processReaction(r *bokchoy.Request) (err error) {
 	case isCommand(me, "r?") && allReady(me.Reactions):
 		err = countDown(me)
 	// Bird House repeat check
-	case isBHNotify(me) && hasUserReacted(me.Reactions, m.UserID, "🔁") && !hasBotReacted(me.Reactions, "✅"):
+	case isBHNotify(me) && hasUserReacted(me.Reactions, mr.UserID, "🔁") && !hasBotReacted(me.Reactions, "✅"):
 		err = sendBH(&BHOptions{
 			Seeds:     10,
-			ChannelID: m.ChannelID,
-			MessageID: m.MessageID,
-			UserID:    m.UserID})
+			ChannelID: mr.ChannelID,
+			MessageID: mr.MessageID,
+			UserID:    mr.UserID})
 	// Herb repeat check
-	case isHerbNotify(me) && hasUserReacted(me.Reactions, m.UserID, "🔁") && !hasBotReacted(me.Reactions, "✅"):
+	case isHerbNotify(me) && hasUserReacted(me.Reactions, mr.UserID, "🔁") && !hasBotReacted(me.Reactions, "✅"):
 		err = sendHerb(&HerbOptions{
 			Stage:     0,
-			ChannelID: m.ChannelID,
-			MessageID: m.MessageID,
-			UserID:    m.UserID,
+			ChannelID: mr.ChannelID,
+			MessageID: mr.MessageID,
+			UserID:    mr.UserID,
 		})
 	// Archive check
-	case len(me.Embeds) != 0 && m.Emoji.Name == "✅":
-		err = archive(m)
+	case len(me.Embeds) != 0 && mr.Emoji.Name == "✅":
+		err = archive(mr)
 	}
 	if err != nil {
 		log.Println(err)
