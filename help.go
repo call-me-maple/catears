@@ -14,9 +14,9 @@ func allReady(users []*discordgo.MessageReactions) bool {
 	return countReactions(users, "✅") == 3
 }
 
-func isCommand(content, keyword string) bool {
+func isCommand(m *discordgo.Message, keyword string) bool {
 	keyword = strings.TrimSpace(keyword)
-	return strings.Contains(content, keyword+" ") || strings.HasSuffix(content, keyword)
+	return (strings.Contains(m.Content, keyword+" ") || strings.HasSuffix(m.Content, keyword)) && isBotMentioned(m.Mentions)
 }
 
 func splitCommand(content, keyword string) []string {
@@ -36,22 +36,22 @@ func isConfigKey(key string) bool {
 	return false
 }
 
-func isBHNotify(content string) bool {
-	return strings.Contains(content, "Bird houses are ready!")
+func isBHNotify(m *discordgo.Message) bool {
+	return strings.Contains(m.Content, "Bird houses are ready!") && isUserMentioned(m.Mentions, m.Author.ID)
 }
 
-func isHerbNotify(content string) bool {
-	return strings.Contains(content, "Herbs are grown!")
+func isHerbNotify(m *discordgo.Message) bool {
+	return strings.Contains(m.Content, "Herbs are grown!") && isUserMentioned(m.Mentions, m.Author.ID)
 }
 
 func reactFollowUp(m *discordgo.Message) {
 	switch {
-	case isBHNotify(m.Content):
+	case isBHNotify(m):
 		err := publishReaction(m.ChannelID, m.ID, "🔁")
 		if err != nil {
 			return
 		}
-	case isHerbNotify(m.Content):
+	case isHerbNotify(m):
 		err := publishReaction(m.ChannelID, m.ID, "🔁")
 		if err != nil {
 			return

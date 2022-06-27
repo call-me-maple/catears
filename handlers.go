@@ -7,7 +7,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/thoas/bokchoy"
 	"log"
-	"strings"
 )
 
 func messageCreated(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -61,21 +60,25 @@ func processReaction(r *bokchoy.Request) (err error) {
 	}
 
 	switch {
-	case isBotMentioned(me.Mentions) && strings.Contains(me.Content, "r?") && allReady(me.Reactions):
+	// Count-down ready check
+	case isCommand(me, "r?") && allReady(me.Reactions):
 		err = countDown(me)
-	case isBHNotify(me.Content) && isUserMentioned(me.Mentions, m.UserID) && !hasBotReacted(me.Reactions, "✅"):
+	// Bird House repeat check
+	case isBHNotify(me) && hasUserReacted(me.Reactions, m.UserID, "🔁") && !hasBotReacted(me.Reactions, "✅"):
 		err = sendBH(&BHOptions{
 			Seeds:     10,
 			ChannelID: m.ChannelID,
 			MessageID: m.MessageID,
 			UserID:    m.UserID})
-	case isHerbNotify(me.Content) && isUserMentioned(me.Mentions, m.UserID) && !hasBotReacted(me.Reactions, "✅"):
+	// Herb repeat check
+	case isHerbNotify(me) && hasUserReacted(me.Reactions, m.UserID, "🔁") && !hasBotReacted(me.Reactions, "✅"):
 		err = sendHerb(&HerbOptions{
 			Stage:     0,
 			ChannelID: m.ChannelID,
 			MessageID: m.MessageID,
 			UserID:    m.UserID,
 		})
+	// Archive check
 	case len(me.Embeds) != 0 && m.Emoji.Name == "✅":
 		err = archive(m)
 	}
@@ -93,15 +96,21 @@ func processMessage(r *bokchoy.Request) (err error) {
 		log.Println(err)
 		return err
 	}
+	// Query full message info
+	me, err := dg.ChannelMessage(m.ChannelID, m.ID)
+	if err != nil {
+		fmt.Println("failed to grab message", err)
+		return
+	}
 
 	switch {
-	case isCommand(m.Content, "music?") && isBotMentioned(m.Mentions):
+	case isCommand(me, "music?"):
 		err = findMusic(m)
-	case isCommand(m.Content, "bh") && isBotMentioned(m.Mentions):
+	case isCommand(me, "bh"):
 		err = runBirdHouse(m)
-	case isCommand(m.Content, "herb") && isBotMentioned(m.Mentions):
+	case isCommand(me, "herb"):
 		err = runHerb(m)
-	case isCommand(m.Content, "config") && isBotMentioned(m.Mentions):
+	case isCommand(me, "config"):
 		err = runConfig(m)
 	case isBotMentioned(m.Mentions):
 		err = respondToMention(m)
