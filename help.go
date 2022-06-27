@@ -11,7 +11,7 @@ import (
 
 func allReady(users []*discordgo.MessageReactions) bool {
 	// TODO look at guild and count active users
-	return countReactions(users, "✅") == 2
+	return countReactions(users, "✅") == 3
 }
 
 func isCommand(content, keyword string) bool {
