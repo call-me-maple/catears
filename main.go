@@ -15,6 +15,7 @@ var (
 	reactionCreate *bokchoy.Queue
 	messageSend    *bokchoy.Queue
 	messageReact   *bokchoy.Queue
+	followUp       *bokchoy.Queue
 	dg             *discordgo.Session
 	client         *redis.Client
 )
@@ -64,7 +65,8 @@ func main() {
 		messageSend.HandleFunc(sendMessage)
 		messageReact = engine.Queue(os.Getenv("MSG_REACT_QUEUE"))
 		messageReact.HandleFunc(sendReaction)
-
+		followUp = engine.Queue(os.Getenv("FOLLOW_UP_QUEUE"))
+		followUp.HandleFunc(checkin)
 		g.Add(func() error {
 			return engine.Run(ctx)
 		}, func(error) {

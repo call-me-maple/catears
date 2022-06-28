@@ -1,11 +1,7 @@
 package main
 
 import (
-	"context"
-	"encoding/json"
 	"github.com/bwmarrin/discordgo"
-	"github.com/thoas/bokchoy"
-	"log"
 	"strings"
 )
 
@@ -69,44 +65,6 @@ func reactFollowUp(m *discordgo.Message) {
 	}
 }
 
-func publishReaction(channelID, messageID, emoji string, options ...bokchoy.Option) (task *bokchoy.Task, err error) {
-	out := &Reaction{
-		ChannelId: channelID,
-		MessageID: messageID,
-		Emoji: &discordgo.Emoji{
-			ID: emoji,
-		},
-	}
-
-	data, err := json.Marshal(out)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	task, err = messageReact.Publish(context.Background(), string(data), options...)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	return
-}
-
-func publishMessage(channelID, content string, options ...bokchoy.Option) (task *bokchoy.Task, err error) {
-	out := &Message{
-		MessageSend: &discordgo.MessageSend{
-			Content: content,
-		},
-		ChannelID: channelID,
-	}
-	data, err := json.Marshal(out)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	task, err = messageSend.Publish(context.Background(), string(data), options...)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	return
+func formatKey(parts ...string) string {
+	return strings.Join(parts, ":")
 }

@@ -8,7 +8,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/thoas/bokchoy"
 	"log"
-	"strings"
 	"time"
 )
 
@@ -43,7 +42,7 @@ func runBirdHouse(m *discordgo.MessageCreate) (err error) {
 }
 
 func sendBH(o *BHOptions) (err error) {
-	taskKey := strings.Join([]string{"bh", o.UserID, "task"}, ":")
+	taskKey := formatKey("bh", o.UserID, "task")
 	err = cancelTask(taskKey)
 	if err != nil {
 		log.Println(err)
@@ -51,13 +50,19 @@ func sendBH(o *BHOptions) (err error) {
 	}
 
 	content := fmt.Sprintf("<@%v> Bird houses are ready!", o.UserID)
-	wait := time.Duration(o.Seeds) * 5 * time.Second
+	wait := time.Duration(o.Seeds) * 5 * time.Minute
 	task, err := publishMessage(o.ChannelID, content, bokchoy.WithCountdown(wait))
 	if err != nil {
 		return
 	}
 	client.Set(taskKey, task.ID, wait)
 	log.Println("set", taskKey, "=", task.ID)
+
+	checkup := wait + (5 * time.Minute)
+	_, err = publishFollowUp(o.ChannelID, o.UserID, "bird houses", taskKey, bokchoy.WithCountdown(checkup))
+	if err != nil {
+		return err
+	}
 
 	_, err = publishReaction(o.ChannelID, o.MessageID, "✅")
 	if err != nil {

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
+	"github.com/go-redis/redis/v7"
 	"github.com/thoas/bokchoy"
 	"log"
 )
@@ -155,5 +156,27 @@ func sendReaction(req *bokchoy.Request) (err error) {
 		return
 	}
 	log.Println("added reaction", r.Emoji.ID)
+	return
+}
+
+func checkin(req *bokchoy.Request) (err error) {
+	res := fmt.Sprintf("%v", req.Task.Payload)
+	f := new(FollowUp)
+	err = json.Unmarshal([]byte(res), &f)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	_, err = client.Get(f.Key).Result()
+	switch err {
+	case nil:
+	case redis.Nil:
+		content := fmt.Sprintf("I think your %v are still ready <@%v>...", f.Type, f.UserID)
+		_, err = publishMessage(f.ChannelID, content)
+		return
+	default:
+		log.Println("error getting key: ", f.Key, err)
+		return
+	}
 	return
 }

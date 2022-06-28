@@ -10,7 +10,6 @@ import (
 	"github.com/thoas/bokchoy"
 	"log"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -45,7 +44,7 @@ func runHerb(m *discordgo.MessageCreate) (err error) {
 }
 
 func sendHerb(o *HerbOptions) (err error) {
-	taskKey := strings.Join([]string{"herb", o.UserID, "task"}, ":")
+	taskKey := formatKey("herb", o.UserID, "task")
 	err = cancelTask(taskKey)
 	if err != nil {
 		log.Println(err)
@@ -54,7 +53,7 @@ func sendHerb(o *HerbOptions) (err error) {
 
 	content := fmt.Sprintf("<@%v> Herbs are grown!", o.UserID)
 
-	key := strings.Join([]string{"config", o.UserID, "offset"}, ":")
+	key := formatKey("config", o.UserID, "offset")
 	result, _ := client.Get(key).Result()
 	offset, err := strconv.Atoi(result)
 	if err != nil {
@@ -90,6 +89,12 @@ func sendHerb(o *HerbOptions) (err error) {
 	}
 	client.Set(taskKey, task.ID, wait)
 	log.Println("set", taskKey, "=", task.ID)
+
+	checkup := wait + (10 * time.Minute)
+	_, err = publishFollowUp(o.ChannelID, o.UserID, "herbs", taskKey, bokchoy.WithCountdown(checkup))
+	if err != nil {
+		return err
+	}
 
 	_, err = publishReaction(o.ChannelID, o.MessageID, "✅")
 	if err != nil {
