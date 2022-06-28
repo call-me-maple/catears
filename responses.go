@@ -27,7 +27,7 @@ func lookForMemes(m *discordgo.MessageCreate) (err error) {
 		return
 	}
 
-	err = publishMessage(m.ChannelID, content)
+	_, err = publishMessage(m.ChannelID, content)
 	if err != nil {
 		return
 	}
@@ -45,7 +45,7 @@ func respondToMention(m *discordgo.MessageCreate) error {
 		return nil
 	}
 
-	err := publishReaction(m.ChannelID, m.ID, emoji)
+	_, err := publishReaction(m.ChannelID, m.ID, emoji)
 	if err != nil {
 		return err
 	}
@@ -81,7 +81,7 @@ func findMusic(m *discordgo.MessageCreate) error {
 
 	// Send a random message with a link
 	randMusic := linksOnly[rand.Intn(len(linksOnly))]
-	err = publishMessage(m.ChannelID, randMusic.Content)
+	_, err = publishMessage(m.ChannelID, randMusic.Content)
 	if err != nil {
 		return err
 	}
@@ -164,14 +164,14 @@ func countDown(m *discordgo.Message) (err error) {
 			continue
 		}
 		delay := bokchoy.WithCountdown(time.Duration(wait-i) * time.Second)
-		err = publishMessage(m.ChannelID, content, delay)
+		_, err = publishMessage(m.ChannelID, content, delay)
 		if err != nil {
 			return
 		}
 	}
 
 	delay := bokchoy.WithCountdown(time.Duration(rand.Intn((wait/2)+10)) * time.Second)
-	err = publishMessage(m.ChannelID, "now?", delay)
+	_, err = publishMessage(m.ChannelID, "now?", delay)
 	if err != nil {
 		return
 	}
@@ -181,7 +181,7 @@ func countDown(m *discordgo.Message) (err error) {
 	}
 
 	delay = bokchoy.WithCountdown(time.Duration(wait+rand.Intn(15)) * time.Second)
-	err = publishMessage(m.ChannelID, "now?", delay)
+	_, err = publishMessage(m.ChannelID, "now?", delay)
 	if err != nil {
 		return
 	}

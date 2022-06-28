@@ -7,6 +7,8 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/pkg/errors"
 	"github.com/thoas/bokchoy"
+	"log"
+	"strings"
 	"time"
 )
 
@@ -27,7 +29,7 @@ func runBirdHouse(m *discordgo.MessageCreate) (err error) {
 
 	err = parseBH(m.Content, options)
 	if err != nil {
-		err = publishMessage(m.ChannelID, fmt.Sprintf("%v", err))
+		_, err = publishMessage(m.ChannelID, fmt.Sprintf("%v", err))
 		if err != nil {
 			return
 		}
@@ -41,14 +43,23 @@ func runBirdHouse(m *discordgo.MessageCreate) (err error) {
 }
 
 func sendBH(o *BHOptions) (err error) {
-	content := fmt.Sprintf("<@%v> Bird houses are ready!", o.UserID)
-	wait := time.Duration(o.Seeds) * 5 * time.Minute
-	err = publishMessage(o.ChannelID, content, bokchoy.WithCountdown(wait))
+	taskKey := strings.Join([]string{"bh", o.UserID, "task"}, ":")
+	err = cancelTask(taskKey)
 	if err != nil {
+		log.Println(err)
 		return
 	}
 
-	err = publishReaction(o.ChannelID, o.MessageID, "✅")
+	content := fmt.Sprintf("<@%v> Bird houses are ready!", o.UserID)
+	wait := time.Duration(o.Seeds) * 5 * time.Second
+	task, err := publishMessage(o.ChannelID, content, bokchoy.WithCountdown(wait))
+	if err != nil {
+		return
+	}
+	client.Set(taskKey, task.ID, wait)
+	log.Println("set", taskKey, "=", task.ID)
+
+	_, err = publishReaction(o.ChannelID, o.MessageID, "✅")
 	if err != nil {
 		return
 	}

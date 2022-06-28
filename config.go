@@ -25,7 +25,7 @@ func runConfig(m *discordgo.MessageCreate) (err error) {
 
 	err = parseConfig(m.Content, options)
 	if err != nil {
-		err = publishMessage(m.ChannelID, fmt.Sprintf("%v", err))
+		_, err = publishMessage(m.ChannelID, fmt.Sprintf("%v", err))
 		if err != nil {
 			return
 		}
@@ -42,7 +42,7 @@ func saveConfig(o *ConfigOptions) (err error) {
 	key := strings.Join([]string{"config", o.UserID, o.Key}, ":")
 	client.Set(key, o.Value, 0)
 	log.Println("set", key, "=", o.Value)
-	err = publishReaction(o.ChannelID, o.MessageID, "✅")
+	_, err = publishReaction(o.ChannelID, o.MessageID, "✅")
 	if err != nil {
 		return
 	}

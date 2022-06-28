@@ -52,7 +52,6 @@ func main() {
 		// Logger nil seems weird
 		engine, err := bokchoy.New(ctx, bokchoy.Config{},
 			bokchoy.WithBroker(bokchoy.NewRedisBroker(client, "client", "", nil)))
-
 		if err != nil {
 			log.Println("error opening redis connection,", err)
 			return

@@ -31,7 +31,7 @@ func runHerb(m *discordgo.MessageCreate) (err error) {
 
 	err = parseHerb(m.Content, options)
 	if err != nil {
-		err = publishMessage(m.ChannelID, fmt.Sprintf("%v", err))
+		_, err = publishMessage(m.ChannelID, fmt.Sprintf("%v", err))
 		if err != nil {
 			return
 		}
@@ -45,13 +45,20 @@ func runHerb(m *discordgo.MessageCreate) (err error) {
 }
 
 func sendHerb(o *HerbOptions) (err error) {
+	taskKey := strings.Join([]string{"herb", o.UserID, "task"}, ":")
+	err = cancelTask(taskKey)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
 	content := fmt.Sprintf("<@%v> Herbs are grown!", o.UserID)
 
 	key := strings.Join([]string{"config", o.UserID, "offset"}, ":")
 	result, _ := client.Get(key).Result()
 	offset, err := strconv.Atoi(result)
 	if err != nil {
-		err = publishMessage(o.ChannelID, "No farm tick offset configured. Use '@catears config offset=value'")
+		_, err = publishMessage(o.ChannelID, "No farm tick offset configured. Use '@catears config offset=value'")
 		if err != nil {
 			return
 		}
@@ -77,12 +84,14 @@ func sendHerb(o *HerbOptions) (err error) {
 	finish := growthTimes[len(growthTimes)-1]
 	wait := finish.Sub(time.Now())
 	log.Printf("herbs done in: %v at: %v\n", wait, growthTimes[len(growthTimes)-1])
-	err = publishMessage(o.ChannelID, content, bokchoy.WithCountdown(wait))
+	task, err := publishMessage(o.ChannelID, content, bokchoy.WithCountdown(wait))
 	if err != nil {
 		return
 	}
+	client.Set(taskKey, task.ID, wait)
+	log.Println("set", taskKey, "=", task.ID)
 
-	err = publishReaction(o.ChannelID, o.MessageID, "✅")
+	_, err = publishReaction(o.ChannelID, o.MessageID, "✅")
 	if err != nil {
 		return
 	}

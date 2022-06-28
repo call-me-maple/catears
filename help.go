@@ -57,19 +57,19 @@ func isHerbNotify(m *discordgo.Message, userID string) (b bool) {
 func reactFollowUp(m *discordgo.Message) {
 	switch {
 	case isBHNotify(m, ""):
-		err := publishReaction(m.ChannelID, m.ID, "🔁")
+		_, err := publishReaction(m.ChannelID, m.ID, "🔁")
 		if err != nil {
 			return
 		}
 	case isHerbNotify(m, ""):
-		err := publishReaction(m.ChannelID, m.ID, "🔁")
+		_, err := publishReaction(m.ChannelID, m.ID, "🔁")
 		if err != nil {
 			return
 		}
 	}
 }
 
-func publishReaction(channelID, messageID, emoji string, options ...bokchoy.Option) (err error) {
+func publishReaction(channelID, messageID, emoji string, options ...bokchoy.Option) (task *bokchoy.Task, err error) {
 	out := &Reaction{
 		ChannelId: channelID,
 		MessageID: messageID,
@@ -83,7 +83,7 @@ func publishReaction(channelID, messageID, emoji string, options ...bokchoy.Opti
 		log.Println(err)
 		return
 	}
-	_, err = messageReact.Publish(context.Background(), string(data), options...)
+	task, err = messageReact.Publish(context.Background(), string(data), options...)
 	if err != nil {
 		log.Println(err)
 		return
@@ -91,7 +91,7 @@ func publishReaction(channelID, messageID, emoji string, options ...bokchoy.Opti
 	return
 }
 
-func publishMessage(channelID, content string, options ...bokchoy.Option) (err error) {
+func publishMessage(channelID, content string, options ...bokchoy.Option) (task *bokchoy.Task, err error) {
 	out := &Message{
 		MessageSend: &discordgo.MessageSend{
 			Content: content,
@@ -101,12 +101,12 @@ func publishMessage(channelID, content string, options ...bokchoy.Option) (err e
 	data, err := json.Marshal(out)
 	if err != nil {
 		log.Println(err)
-		return err
+		return
 	}
-	_, err = messageSend.Publish(context.Background(), string(data), options...)
+	task, err = messageSend.Publish(context.Background(), string(data), options...)
 	if err != nil {
 		log.Println(err)
-		return err
+		return
 	}
 	return
 }
