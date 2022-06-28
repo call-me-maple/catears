@@ -25,7 +25,11 @@ func runConfig(m *discordgo.MessageCreate) (err error) {
 
 	err = parseConfig(m.Content, options)
 	if err != nil {
-		_, err = publishMessage(m.ChannelID, fmt.Sprintf("%v", err))
+		_, err = publishMessage(&Message{
+			ChannelID:   m.ChannelID,
+			MessageSend: &discordgo.MessageSend{Content: fmt.Sprintf("%v", err)},
+		})
+
 		if err != nil {
 			return
 		}

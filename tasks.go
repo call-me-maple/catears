@@ -48,14 +48,8 @@ func publishReaction(channelID, messageID, emoji string, options ...bokchoy.Opti
 	return
 }
 
-func publishMessage(channelID, content string, options ...bokchoy.Option) (task *bokchoy.Task, err error) {
-	out := &Message{
-		MessageSend: &discordgo.MessageSend{
-			Content: content,
-		},
-		ChannelID: channelID,
-	}
-	data, err := json.Marshal(out)
+func publishMessage(m *Message, options ...bokchoy.Option) (task *bokchoy.Task, err error) {
+	data, err := json.Marshal(m)
 	if err != nil {
 		log.Println(err)
 		return

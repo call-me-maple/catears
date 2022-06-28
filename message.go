@@ -7,6 +7,7 @@ import (
 type Message struct {
 	ChannelID   string
 	MessageSend *discordgo.MessageSend
+	FollowUp    *FollowUp
 }
 
 type FollowUp struct {

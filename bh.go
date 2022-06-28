@@ -28,7 +28,10 @@ func runBirdHouse(m *discordgo.MessageCreate) (err error) {
 
 	err = parseBH(m.Content, options)
 	if err != nil {
-		_, err = publishMessage(m.ChannelID, fmt.Sprintf("%v", err))
+		_, err = publishMessage(&Message{
+			ChannelID:   m.ChannelID,
+			MessageSend: &discordgo.MessageSend{Content: fmt.Sprintf("%v", err)},
+		})
 		if err != nil {
 			return
 		}
@@ -51,7 +54,11 @@ func sendBH(o *BHOptions) (err error) {
 
 	content := fmt.Sprintf("<@%v> Bird houses are ready!", o.UserID)
 	wait := time.Duration(o.Seeds) * 5 * time.Minute
-	task, err := publishMessage(o.ChannelID, content, bokchoy.WithCountdown(wait))
+	task, err := publishMessage(
+		&Message{
+			ChannelID:   o.ChannelID,
+			MessageSend: &discordgo.MessageSend{Content: content}},
+		bokchoy.WithCountdown(wait))
 	if err != nil {
 		return
 	}

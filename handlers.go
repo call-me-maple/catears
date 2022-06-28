@@ -172,7 +172,10 @@ func checkin(req *bokchoy.Request) (err error) {
 	case nil:
 	case redis.Nil:
 		content := fmt.Sprintf("I think your %v are still ready <@%v>...", f.Type, f.UserID)
-		_, err = publishMessage(f.ChannelID, content)
+		_, err = publishMessage(&Message{
+			ChannelID:   f.ChannelID,
+			MessageSend: &discordgo.MessageSend{Content: content},
+		})
 		return
 	default:
 		log.Println("error getting key: ", f.Key, err)
