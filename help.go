@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/bwmarrin/discordgo"
+	"os"
 	"strings"
 )
 
@@ -67,4 +68,18 @@ func reactFollowUp(m *discordgo.Message) {
 
 func formatKey(parts ...string) string {
 	return strings.Join(parts, ":")
+}
+
+func isDev(guildID, channelID string) bool {
+	channels, err := dg.GuildChannels(guildID)
+	if err != nil {
+		return false
+	}
+	dev, err := findChannel(channels, "dev")
+	if err == nil {
+		if os.Getenv("ENV") != "DEV" && dev.ID == channelID {
+			return true
+		}
+	}
+	return false
 }

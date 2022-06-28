@@ -14,6 +14,9 @@ func messageCreated(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
+	if isDev(m.GuildID, m.ChannelID) {
+		return
+	}
 
 	data, err := json.Marshal(m)
 	if err != nil {
@@ -29,6 +32,9 @@ func messageCreated(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 func reactionCreated(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 	if r.UserID == s.State.User.ID {
+		return
+	}
+	if isDev(r.GuildID, r.ChannelID) {
 		return
 	}
 
