@@ -58,19 +58,21 @@ func sendBH(o *BHOptions) (err error) {
 	task, err := publishMessage(
 		&Message{
 			ChannelID:   o.ChannelID,
-			MessageSend: &discordgo.MessageSend{Content: content}},
+			MessageSend: &discordgo.MessageSend{Content: content},
+			Reaction:    "🔁",
+			FollowUp: &FollowUp{
+				ChannelID: o.ChannelID,
+				UserID:    o.UserID,
+				Type:      "bird houses",
+				Key:       taskKey,
+				Wait:      5 * time.Minute,
+			}},
 		bokchoy.WithCountdown(wait))
 	if err != nil {
 		return
 	}
 	client.Set(taskKey, task.ID, wait)
 	log.Println("set", taskKey, "=", task.ID)
-
-	checkup := wait + (5 * time.Minute)
-	_, err = publishFollowUp(o.ChannelID, o.UserID, "bird houses", taskKey, bokchoy.WithCountdown(checkup))
-	if err != nil {
-		return err
-	}
 
 	_, err = publishReaction(o.ChannelID, o.MessageID, "✅")
 	if err != nil {

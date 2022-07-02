@@ -148,7 +148,19 @@ func sendMessage(r *bokchoy.Request) (err error) {
 		return err
 	}
 	log.Println("sent message:", sent.Content)
-	reactFollowUp(sent)
+
+	if m.Reaction != "" {
+		_, err = publishReaction(m.ChannelID, sent.ID, m.Reaction)
+		if err != nil {
+			return
+		}
+	}
+	if m.FollowUp != nil {
+		_, err = publishFollowUp(m.FollowUp, bokchoy.WithCountdown(m.FollowUp.Wait))
+		if err != nil {
+			return
+		}
+	}
 	return
 }
 

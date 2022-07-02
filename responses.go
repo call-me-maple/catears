@@ -223,7 +223,7 @@ func sendStatus(m *discordgo.Message) (err error) {
 		key = formatKey(user.ID, "herb", "task")
 	default:
 		// Nothing to give status on
-		return
+		return nil
 	}
 
 	var content string

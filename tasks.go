@@ -3,10 +3,11 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"log"
+
 	"github.com/bwmarrin/discordgo"
 	"github.com/go-redis/redis/v7"
 	"github.com/thoas/bokchoy"
-	"log"
 )
 
 func cancelTask(key string) error {
@@ -62,14 +63,8 @@ func publishMessage(m *Message, options ...bokchoy.Option) (task *bokchoy.Task, 
 	return
 }
 
-func publishFollowUp(channelID, userID, taskType, key string, options ...bokchoy.Option) (task *bokchoy.Task, err error) {
-	out := &FollowUp{
-		ChannelID: channelID,
-		UserID:    userID,
-		Type:      taskType,
-		Key:       key,
-	}
-	data, err := json.Marshal(out)
+func publishFollowUp(f *FollowUp, options ...bokchoy.Option) (task *bokchoy.Task, err error) {
+	data, err := json.Marshal(f)
 	if err != nil {
 		log.Println(err)
 		return

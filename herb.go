@@ -91,22 +91,26 @@ func sendHerb(o *HerbOptions) (err error) {
 	finish := growthTimes[len(growthTimes)-1]
 	wait := finish.Sub(now)
 	log.Printf("herbs done in: %v at: %v\n", wait, growthTimes[len(growthTimes)-1])
+
 	task, err := publishMessage(
 		&Message{
 			ChannelID:   o.ChannelID,
-			MessageSend: &discordgo.MessageSend{Content: content}},
+			MessageSend: &discordgo.MessageSend{Content: content},
+			Reaction:    "🔁",
+			FollowUp: &FollowUp{
+				ChannelID: o.ChannelID,
+				UserID:    o.UserID,
+				Type:      "herbs",
+				Key:       taskKey,
+				Wait:      10 * time.Minute,
+			}},
 		bokchoy.WithCountdown(wait))
 	if err != nil {
+		log.Println("marshal errrrr")
 		return
 	}
 	client.Set(taskKey, task.ID, wait)
 	log.Println("set", taskKey, "=", task.ID)
-
-	checkup := wait + (10 * time.Minute)
-	_, err = publishFollowUp(o.ChannelID, o.UserID, "herbs", taskKey, bokchoy.WithCountdown(checkup))
-	if err != nil {
-		return err
-	}
 
 	_, err = publishReaction(o.ChannelID, o.MessageID, "✅")
 	if err != nil {

@@ -57,15 +57,17 @@ func main() {
 			return
 		}
 		messageCreate = engine.Queue(os.Getenv("MSG_CREATE_QUEUE"))
-		messageCreate.HandleFunc(processMessage)
 		reactionCreate = engine.Queue(os.Getenv("REACT_CREATE_QUEUE"))
-		reactionCreate.HandleFunc(processReaction)
 		messageSend = engine.Queue(os.Getenv("MSG_SEND_QUEUE"))
-		messageSend.HandleFunc(sendMessage)
 		messageReact = engine.Queue(os.Getenv("MSG_REACT_QUEUE"))
-		messageReact.HandleFunc(sendReaction)
 		followUp = engine.Queue(os.Getenv("FOLLOW_UP_QUEUE"))
+
+		messageCreate.HandleFunc(processMessage)
+		reactionCreate.HandleFunc(processReaction)
+		messageSend.HandleFunc(sendMessage)
+		messageReact.HandleFunc(sendReaction)
 		followUp.HandleFunc(checkin)
+
 		g.Add(func() error {
 			return engine.Run(ctx)
 		}, func(error) {
