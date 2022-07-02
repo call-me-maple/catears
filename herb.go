@@ -86,9 +86,10 @@ func sendHerb(o *HerbOptions) (err error) {
 	}
 
 	// 5 growth stages for herbs
-	growthTimes := parse.NextN(time.Now(), 5-o.Stage)
+	now := time.Now()
+	growthTimes := parse.NextN(now, 5-o.Stage)
 	finish := growthTimes[len(growthTimes)-1]
-	wait := finish.Sub(time.Now())
+	wait := finish.Sub(now)
 	log.Printf("herbs done in: %v at: %v\n", wait, growthTimes[len(growthTimes)-1])
 	task, err := publishMessage(
 		&Message{

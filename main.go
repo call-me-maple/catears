@@ -2,12 +2,13 @@ package main
 
 import (
 	"context"
+	"log"
+	"os"
+
 	"github.com/bwmarrin/discordgo"
 	"github.com/go-redis/redis/v7"
 	"github.com/oklog/run"
 	"github.com/thoas/bokchoy"
-	"log"
-	"os"
 )
 
 var (
@@ -35,11 +36,9 @@ func main() {
 				return err
 			}
 			log.Println("catears! wakey wakey")
-			select {
-			case <-cancel:
-				log.Printf("nyaa getting sleepy\n")
-				return dg.Close()
-			}
+			<-cancel
+			log.Printf("nyaa getting sleepy\n")
+			return dg.Close()
 		}, func(err error) {
 			close(cancel)
 		})
