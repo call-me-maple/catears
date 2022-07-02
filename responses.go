@@ -221,6 +221,9 @@ func sendStatus(m *discordgo.Message) (err error) {
 		key = formatKey(user.ID, "bh", "task")
 	case isHerbNotify(m, "") && err == nil:
 		key = formatKey(user.ID, "herb", "task")
+	default:
+		// Nothing to give status on
+		return
 	}
 
 	var content string
