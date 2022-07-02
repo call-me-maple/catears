@@ -4,10 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
+
 	"github.com/bwmarrin/discordgo"
 	"github.com/go-redis/redis/v7"
 	"github.com/thoas/bokchoy"
-	"log"
 )
 
 func messageCreated(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -85,6 +86,9 @@ func processReaction(r *bokchoy.Request) (err error) {
 			MessageID: mr.MessageID,
 			UserID:    mr.UserID,
 		})
+	// Status check
+	case (isNotify(me, "") || isNotifyCommand(me)) && mr.Emoji.Name == "❓":
+		err = sendStatus(me)
 	// Archive check
 	case len(me.Embeds) != 0 && mr.Emoji.Name == "✅":
 		err = archive(mr)

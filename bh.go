@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
+	"log"
+	"time"
+
 	"github.com/bwmarrin/discordgo"
 	"github.com/pkg/errors"
 	"github.com/thoas/bokchoy"
-	"log"
-	"time"
 )
 
 type BHOptions struct {
@@ -45,7 +46,7 @@ func runBirdHouse(m *discordgo.MessageCreate) (err error) {
 }
 
 func sendBH(o *BHOptions) (err error) {
-	taskKey := formatKey("bh", o.UserID, "task")
+	taskKey := formatKey(o.UserID, "bh", "task")
 	err = cancelTask(taskKey)
 	if err != nil {
 		log.Println(err)

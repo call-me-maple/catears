@@ -1,15 +1,18 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"github.com/bwmarrin/discordgo"
-	"github.com/thoas/bokchoy"
 	"log"
 	"math/rand"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/bwmarrin/discordgo"
+	"github.com/go-redis/redis/v7"
+	"github.com/thoas/bokchoy"
 )
 
 func lookForMemes(m *discordgo.MessageCreate) (err error) {
@@ -203,5 +206,49 @@ func countDown(m *discordgo.Message) (err error) {
 	if err != nil {
 		return
 	}
+	return
+}
+
+func sendStatus(m *discordgo.Message) (err error) {
+	user, err := findMentionedUser(m.Mentions)
+	var key string
+	switch {
+	case isCommand(m, "bh"):
+		key = formatKey(m.Author.ID, "bh", "task")
+	case isCommand(m, "herb"):
+		key = formatKey(m.Author.ID, "herb", "task")
+	case isBHNotify(m, "") && err == nil:
+		key = formatKey(user.ID, "bh", "task")
+	case isHerbNotify(m, "") && err == nil:
+		key = formatKey(user.ID, "herb", "task")
+	}
+
+	var content string
+	taskID, err := client.Get(key).Result()
+	switch err {
+	case nil:
+		if task, err := messageSend.Get(context.Background(), taskID); err == nil {
+			content = fmt.Sprintf("happening in.. umm... %v", task.ETADisplay())
+		} else {
+			return err
+		}
+	case redis.Nil:
+		content = "nothing much happening here..."
+	default:
+		log.Println("error getting key: ", key, err)
+		return err
+	}
+	_, err = publishMessage(
+		&Message{
+			ChannelID: m.ChannelID,
+			MessageSend: &discordgo.MessageSend{
+				Content: content,
+				Reference: &discordgo.MessageReference{
+					MessageID: m.ID,
+					ChannelID: m.ChannelID,
+				},
+			},
+		},
+	)
 	return
 }

@@ -1,9 +1,10 @@
 package main
 
 import (
-	"github.com/bwmarrin/discordgo"
 	"os"
 	"strings"
+
+	"github.com/bwmarrin/discordgo"
 )
 
 func allReady(users []*discordgo.MessageReactions) bool {
@@ -14,6 +15,10 @@ func allReady(users []*discordgo.MessageReactions) bool {
 func isCommand(m *discordgo.Message, keyword string) bool {
 	keyword = strings.TrimSpace(keyword)
 	return (strings.Contains(m.Content, keyword+" ") || strings.HasSuffix(m.Content, keyword)) && isBotMentioned(m.Mentions)
+}
+
+func isNotifyCommand(m *discordgo.Message) bool {
+	return isCommand(m, "herb") || isCommand(m, "bh")
 }
 
 func splitCommand(content, keyword string) []string {
@@ -31,6 +36,10 @@ func isConfigKey(key string) bool {
 		}
 	}
 	return false
+}
+
+func isNotify(m *discordgo.Message, userID string) (b bool) {
+	return isBHNotify(m, userID) || isHerbNotify(m, userID)
 }
 
 func isBHNotify(m *discordgo.Message, userID string) (b bool) {

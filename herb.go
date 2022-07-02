@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
+	"log"
+	"strconv"
+	"time"
+
 	"github.com/bwmarrin/discordgo"
 	"github.com/gorhill/cronexpr"
 	"github.com/pkg/errors"
 	"github.com/thoas/bokchoy"
-	"log"
-	"strconv"
-	"time"
 )
 
 type HerbOptions struct {
@@ -47,7 +48,7 @@ func runHerb(m *discordgo.MessageCreate) (err error) {
 }
 
 func sendHerb(o *HerbOptions) (err error) {
-	taskKey := formatKey("herb", o.UserID, "task")
+	taskKey := formatKey(o.UserID, "herb", "task")
 	err = cancelTask(taskKey)
 	if err != nil {
 		log.Println(err)
