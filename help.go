@@ -60,21 +60,6 @@ func isHerbNotify(m *discordgo.Message, userID string) (b bool) {
 	return b && strings.Contains(m.Content, "Herbs are grown!") && m.Author.ID == dg.State.User.ID
 }
 
-func reactFollowUp(m *discordgo.Message) {
-	switch {
-	case isBHNotify(m, ""):
-		_, err := publishReaction(m.ChannelID, m.ID, "🔁")
-		if err != nil {
-			return
-		}
-	case isHerbNotify(m, ""):
-		_, err := publishReaction(m.ChannelID, m.ID, "🔁")
-		if err != nil {
-			return
-		}
-	}
-}
-
 func formatKey(parts ...string) string {
 	return strings.Join(parts, ":")
 }
