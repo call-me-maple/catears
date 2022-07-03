@@ -27,6 +27,7 @@ func cancelTask(key string) error {
 	return nil
 }
 
+//TODO pass Reaction ref instead
 func publishReaction(channelID, messageID, emoji string, options ...bokchoy.Option) (task *bokchoy.Task, err error) {
 	out := &Reaction{
 		ChannelId: channelID,

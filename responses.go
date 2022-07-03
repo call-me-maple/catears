@@ -26,6 +26,8 @@ func lookForMemes(m *discordgo.MessageCreate) (err error) {
 		content = "don't 🐡"
 	case "73":
 		content = "fornite"
+	case "barrier":
+		content = "nani"
 	default:
 		return
 	}
