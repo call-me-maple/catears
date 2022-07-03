@@ -16,6 +16,7 @@ import (
 
 type HerbOptions struct {
 	Stage     uint
+	Remainder uint
 	ChannelID string
 	MessageID string
 	UserID    string
@@ -87,7 +88,13 @@ func sendHerb(o *HerbOptions) (err error) {
 
 	// 5 growth stages for herbs
 	now := time.Now()
-	growthTimes := parse.NextN(now, 5-o.Stage)
+	var ticks uint
+	if o.Remainder > 0 {
+		ticks = o.Remainder
+	} else {
+		ticks = 5 - o.Stage
+	}
+	growthTimes := parse.NextN(now, ticks)
 	finish := growthTimes[len(growthTimes)-1]
 	wait := finish.Sub(now)
 	log.Printf("herbs done in: %v at: %v\n", wait, growthTimes[len(growthTimes)-1])
@@ -125,6 +132,7 @@ func parseHerb(str string, options *HerbOptions) (err error) {
 	cmd := flag.NewFlagSet("herb", flag.ContinueOnError)
 	cmd.SetOutput(buf)
 	cmd.UintVar(&options.Stage, "s", 1, "The current growth stage. 1-4")
+	cmd.UintVar(&options.Remainder, "r", 0, "How many growth stages left.")
 	err = cmd.Parse(splitCommand(str, "herb"))
 	if err != nil {
 		err = errors.Errorf("%v", buf.String())
@@ -135,8 +143,7 @@ func parseHerb(str string, options *HerbOptions) (err error) {
 
 func (options *HerbOptions) validate() (err error) {
 	switch {
-	case options.Stage >= 1 && options.Stage < 5:
-	default:
+	case options.Stage < 1 || options.Stage > 4:
 		return errors.Errorf("Growth stage must be between 1-4.")
 	}
 	return
