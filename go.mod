@@ -15,6 +15,7 @@ require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
+	github.com/pborman/getopt/v2 v2.1.0
 	github.com/thoas/go-funk v0.4.0 // indirect
 	go.uber.org/atomic v1.5.0 // indirect
 	go.uber.org/multierr v1.3.0 // indirect

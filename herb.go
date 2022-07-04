@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/gorhill/cronexpr"
 	"github.com/pkg/errors"
 	"github.com/thoas/bokchoy"
 )
@@ -71,33 +70,15 @@ func sendHerb(o *HerbOptions) (err error) {
 		}
 		return
 	}
-	// All times ending in :00, :20, :40
-	timings := [3]int{00, 20, 40}
-	for i, t := range timings {
-		t -= offset
-		if t < 0 {
-			t += 60
-		}
-		timings[i] = t
-	}
-	expr := fmt.Sprintf("0 %v,%v,%v * ? * * *", timings[0], timings[1], timings[2])
-	parse, err := cronexpr.Parse(expr)
-	if err != nil {
-		return err
-	}
-
-	// 5 growth stages for herbs
-	now := time.Now()
 	var ticks uint
 	if o.Remainder > 0 {
 		ticks = o.Remainder
 	} else {
 		ticks = 5 - o.Stage
 	}
-	growthTimes := parse.NextN(now, ticks)
-	finish := growthTimes[len(growthTimes)-1]
-	wait := finish.Sub(now)
-	log.Printf("herbs done in: %v at: %v\n", wait, growthTimes[len(growthTimes)-1])
+	finish := getTickTime(int64(offset), 20, int64(ticks))
+	wait := time.Until(finish)
+	log.Printf("herbs done in: %v at: %v\n", wait, finish)
 
 	task, err := publishMessage(
 		&Message{
@@ -138,6 +119,7 @@ func parseHerb(str string, options *HerbOptions) (err error) {
 		err = errors.Errorf("%v", buf.String())
 		return
 	}
+
 	return options.validate()
 }
 

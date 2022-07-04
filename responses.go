@@ -219,10 +219,14 @@ func sendStatus(m *discordgo.Message) (err error) {
 		key = formatKey(m.Author.ID, "bh", "task")
 	case isCommand(m, "herb"):
 		key = formatKey(m.Author.ID, "herb", "task")
+	case isCommand(m, "jane"):
+		key = formatKey(m.Author.ID, "contract", "task")
 	case isBHNotify(m, "") && err == nil:
 		key = formatKey(user.ID, "bh", "task")
 	case isHerbNotify(m, "") && err == nil:
 		key = formatKey(user.ID, "herb", "task")
+	case isContractNotify(m, "") && err == nil:
+		key = formatKey(user.ID, "contract", "task")
 	default:
 		// Nothing to give status on
 		return nil

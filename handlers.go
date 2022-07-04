@@ -115,6 +115,8 @@ func processMessage(r *bokchoy.Request) (err error) {
 	}
 
 	switch {
+	case isCommand(me, "jane"):
+		err = runContract(m)
 	case isCommand(me, "music?"):
 		err = findMusic(m)
 	case isCommand(me, "bh"):
