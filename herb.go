@@ -70,13 +70,11 @@ func sendHerb(o *HerbOptions) (err error) {
 		}
 		return
 	}
-	var ticks uint
-	if o.Remainder > 0 {
-		ticks = o.Remainder
-	} else {
-		ticks = 6 - o.Stage
+	//var ticks uint
+	if o.Remainder == 0 {
+		o.Remainder = Herb.Stages() + 1 - o.Stage
 	}
-	finish := getTickTime(int64(offset), 20, int64(ticks))
+	finish := getTickTime(int64(offset), 20, int64(o.Remainder))
 	wait := time.Until(finish)
 	log.Printf("herbs done in: %v at: %v\n", wait, finish)
 
