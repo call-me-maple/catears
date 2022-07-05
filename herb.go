@@ -74,7 +74,7 @@ func sendHerb(o *HerbOptions) (err error) {
 	if o.Remainder > 0 {
 		ticks = o.Remainder
 	} else {
-		ticks = 5 - o.Stage
+		ticks = 6 - o.Stage
 	}
 	finish := getTickTime(int64(offset), 20, int64(ticks))
 	wait := time.Until(finish)

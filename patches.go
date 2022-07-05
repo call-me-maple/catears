@@ -7,7 +7,7 @@ import (
 type PatchType int
 
 const (
-	Undefined = iota
+	Undefined PatchType = iota
 	Flower
 	Herb
 	FruitTree
@@ -86,7 +86,7 @@ func (p PatchType) TickRate() time.Duration {
 
 func FindPatchType(s string) PatchType {
 	switch s {
-	case "flower":
+	case "flowers", "flower":
 		return Flower
 	case "herb", "herbs":
 		return Herb

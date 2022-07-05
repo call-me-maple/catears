@@ -101,7 +101,7 @@ func sendContract(o *ContractOptions) (err error) {
 			FollowUp: &FollowUp{
 				ChannelID: o.ChannelID,
 				UserID:    o.UserID,
-				Type:      "contract",
+				Type:      "contracts",
 				Key:       taskKey,
 				Wait:      10 * time.Minute,
 			}},
