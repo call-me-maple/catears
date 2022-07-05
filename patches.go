@@ -1,7 +1,6 @@
 package main
 
 import (
-	"strings"
 	"time"
 )
 
@@ -86,7 +85,7 @@ func (p PatchType) TickRate() time.Duration {
 }
 
 func FindPatchType(s string) PatchType {
-	switch strings.TrimSpace(strings.ToLower(s)) {
+	switch s {
 	case "flower":
 		return Flower
 	case "herb", "herbs":
@@ -101,11 +100,11 @@ func FindPatchType(s string) PatchType {
 		return Potato
 	case "onion", "onions":
 		return Onion
-	case "cabbage", "cabbages":
+	case "cabbage", "cabbages", "cabige":
 		return Cabbage
 	case "tomato", "tomatos":
 		return Tomato
-	case "sweetcorn", "sc":
+	case "sweetcorn", "corn", "sc":
 		return Sweetcorn
 	case "strawberry", "strawberries", "sb":
 		return Strawberry
@@ -115,13 +114,13 @@ func FindPatchType(s string) PatchType {
 		return SnapeGrass
 	case "redberries", "redberry", "rb":
 		return Redberries
-	case "cadavaberries", "cadavaberry", "cada":
+	case "cadavaberries", "cadavaberry", "cadava", "cada":
 		return Cadavaberries
 	case "dwellberries", "dwellberry", "dwell":
 		return Dwellberries
-	case "jangerberries", "jangerberry", "jb":
+	case "jangerberries", "jangerberry", "janger", "jb":
 		return Jangerberries
-	case "whiteberries", "whiteberry", "wb":
+	case "whiteberries", "whiteberry", "white", "wb":
 		return Whiteberries
 	case "poisonivy", "ivy":
 		return PoisonIvy
@@ -133,11 +132,11 @@ func FindPatchType(s string) PatchType {
 		return Maple
 	case "yew":
 		return Yew
-	case "magic":
+	case "magic", "mage":
 		return Magic
-	case "cactus":
+	case "cactus", "cact":
 		return Cactus
-	case "potatocactus", "potcactus", "pc":
+	case "potatocactus", "potcactus", "potcact", "pc":
 		return PotatoCactus
 	}
 	return Undefined

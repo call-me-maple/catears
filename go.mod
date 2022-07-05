@@ -5,7 +5,6 @@ go 1.18
 require (
 	github.com/bwmarrin/discordgo v0.25.0
 	github.com/go-redis/redis/v7 v7.2.0
-	github.com/gorhill/cronexpr v0.0.0-20180427100037-88b0669f7d75
 	github.com/oklog/run v1.1.0
 	github.com/pkg/errors v0.8.1
 	github.com/thoas/bokchoy v0.2.1
