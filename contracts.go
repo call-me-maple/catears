@@ -124,7 +124,7 @@ func parseContract(str string, options *ContractOptions) (err error) {
 	var s = opts.Uint('s', 1, "The current growth stage.", "stage")
 	var r = opts.Uint('r', 0, "How many growth stages left.", "tick")
 
-	str = strings.ToLower(strings.TrimSpace(str))
+	str = strings.TrimSpace(str)
 	i := strings.Index(str, "jane ")
 	split := strings.Split(str[i:], " ")
 

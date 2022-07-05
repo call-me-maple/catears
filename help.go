@@ -14,8 +14,9 @@ func allReady(users []*discordgo.MessageReactions) bool {
 }
 
 func isCommand(m *discordgo.Message, keyword string) bool {
-	keyword = strings.TrimSpace(keyword)
-	return (strings.Contains(m.Content, keyword+" ") || strings.HasSuffix(m.Content, keyword)) && isBotMentioned(m.Mentions)
+	keyword = strings.ToLower(strings.TrimSpace(keyword))
+	content := strings.ToLower(m.Content)
+	return (strings.Contains(content, keyword+" ") || strings.HasSuffix(content, keyword)) && isBotMentioned(m.Mentions)
 }
 
 func isNotifyCommand(m *discordgo.Message) bool {
