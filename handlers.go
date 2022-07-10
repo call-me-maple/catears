@@ -81,7 +81,7 @@ func processReaction(r *bokchoy.Request) (err error) {
 	// Herb repeat check
 	case isHerbNotify(me, mr.UserID) && mr.Emoji.Name == "🔁" && !hasBotReacted(me.Reactions, "✅"):
 		err = sendHerb(&HerbOptions{
-			Stage:     1,
+			Remainder: 5,
 			ChannelID: mr.ChannelID,
 			MessageID: mr.MessageID,
 			UserID:    mr.UserID,
