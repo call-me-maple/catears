@@ -91,8 +91,15 @@ func isDev(guildID, channelID string) bool {
 
 func getTickTime(offset, tickRate, ticks int64) time.Time {
 	unixNow := time.Now().Unix()
+
+	var calcOffset int64
+	if offset >= tickRate {
+		calcOffset = (offset % tickRate) * 60
+	}
+	unixNow += calcOffset
+
 	currentTick := (unixNow - (unixNow % (tickRate * 60)))
 	goalTick := currentTick + (ticks * tickRate * 60)
-	offset = (offset % tickRate) * 60
-	return time.Unix(goalTick-offset, 0)
+
+	return time.Unix(goalTick-calcOffset, 0)
 }

@@ -81,15 +81,11 @@ func sendContract(o *ContractOptions) (err error) {
 		}
 		return
 	}
-
-	var ticks uint
-	if o.Remainder > 0 {
-		ticks = o.Remainder
-	} else {
-		ticks = o.Type.Stages() + 1 - o.Stage
+	if o.Remainder == 0 {
+		o.Remainder = o.Type.Stages() - o.Stage
 	}
-	log.Println("offset", int64(offset), "tickRate", int64(o.Type.TickRate().Minutes()), "ticks", int64(ticks))
-	finish := getTickTime(int64(offset), int64(o.Type.TickRate().Minutes()), int64(ticks))
+	log.Println("offset", int64(offset), "tickRate", int64(o.Type.TickRate().Minutes()), "ticks", int64(o.Remainder))
+	finish := getTickTime(int64(offset), int64(o.Type.TickRate().Minutes()), int64(o.Remainder))
 	wait := time.Until(finish)
 
 	log.Printf("contract done in: %v at: %v\n", wait, finish)
