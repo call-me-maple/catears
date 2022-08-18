@@ -23,7 +23,7 @@ func lookForMemes(m *discordgo.MessageCreate) (err error) {
 	case "pong":
 		content = "Ping!"
 	case "oatmilk":
-		content = "don't 🐡"
+		content = "don't <:bf:979637608718159912>"
 	case "73":
 		content = "fornite"
 	case "barrier":
