@@ -106,7 +106,7 @@ func FindPatchType(s string) PatchType {
 		return Tomato
 	case "sweetcorn", "corn", "sc":
 		return Sweetcorn
-	case "strawberry", "strawberries", "sb":
+	case "strawberry", "strawberries", "strawb", "sb":
 		return Strawberry
 	case "watermelon", "watermelons", "melon", "melons":
 		return Watermelon
@@ -114,7 +114,7 @@ func FindPatchType(s string) PatchType {
 		return SnapeGrass
 	case "redberries", "redberry", "rb":
 		return Redberries
-	case "cadavaberries", "cadavaberry", "cadava", "cada":
+	case "cadavaberries", "cadavaberry", "cadavab", "cadava", "cada":
 		return Cadavaberries
 	case "dwellberries", "dwellberry", "dwell":
 		return Dwellberries

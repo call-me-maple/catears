@@ -28,6 +28,8 @@ func lookForMemes(m *discordgo.MessageCreate) (err error) {
 		content = "fornite"
 	case "barrier":
 		content = "nani"
+	case "oic":
+		content = "<:oic:977400562381365339>"
 	default:
 		return
 	}
