@@ -86,6 +86,22 @@ func processReaction(r *bokchoy.Request) (err error) {
 			MessageID: mr.MessageID,
 			UserID:    mr.UserID,
 		})
+	// Drop 1 repeat check
+	case isDrop1Notify(me, mr.UserID) && mr.Emoji.Name == "🔁" && !hasBotReacted(me.Reactions, "✅"):
+		err = sendDrop(&DropOptions{
+			Length:    1,
+			ChannelID: mr.ChannelID,
+			MessageID: mr.MessageID,
+			UserID:    mr.UserID,
+		})
+	// Drop 4 repeat check
+	case isDrop4Notify(me, mr.UserID) && mr.Emoji.Name == "🔁" && !hasBotReacted(me.Reactions, "✅"):
+		err = sendDrop(&DropOptions{
+			Length:    4,
+			ChannelID: mr.ChannelID,
+			MessageID: mr.MessageID,
+			UserID:    mr.UserID,
+		})
 	// Status check
 	case (isNotify(me, "") || isNotifyCommand(me)) && mr.Emoji.Name == "❓":
 		err = sendStatus(me)
@@ -125,6 +141,10 @@ func processMessage(r *bokchoy.Request) (err error) {
 		err = runHerb(m)
 	case isCommand(me, "config"):
 		err = runConfig(m)
+	case isCommand(me, "d1"):
+		err = runDrop1(m)
+	case isCommand(me, "d4"):
+		err = runDrop4(m)
 	case isBotMentioned(m.Mentions):
 		err = respondToMention(m)
 	default:
