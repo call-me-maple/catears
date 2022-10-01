@@ -56,6 +56,9 @@ func sendDrop(o *DropOptions) (err error) {
 
 	content := fmt.Sprintf("<@%v> Placeholder drop %v!", o.UserID, o.Length)
 	wait := time.Duration(o.Length) * time.Hour
+	if o.Length == 1 {
+		wait += 30 * time.Minute
+	}
 	task, err := publishMessage(
 		&Message{
 			ChannelID:   o.ChannelID,
