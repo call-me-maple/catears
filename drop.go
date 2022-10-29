@@ -21,7 +21,7 @@ func runDrop1(m *discordgo.MessageCreate) (err error) {
 		ChannelID: m.ChannelID,
 		MessageID: m.ID,
 		UserID:    m.Author.ID,
-		Length:    1,
+		Length:    3,
 	}
 
 	err = sendDrop(options)
@@ -56,9 +56,7 @@ func sendDrop(o *DropOptions) (err error) {
 
 	content := fmt.Sprintf("<@%v> Placeholder drop %v!", o.UserID, o.Length)
 	wait := time.Duration(o.Length) * time.Hour
-	if o.Length == 1 {
-		wait += 30 * time.Minute
-	}
+
 	task, err := publishMessage(
 		&Message{
 			ChannelID:   o.ChannelID,
