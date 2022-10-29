@@ -234,7 +234,7 @@ func sendStatus(m *discordgo.Message) (err error) {
 	case isContractNotify(m, "") && err == nil:
 		key = formatKey(user.ID, "contract", "task")
 	case isDrop1Notify(m, "") && err == nil:
-		key = formatKey(user.ID, "drop1", "task")
+		key = formatKey(user.ID, "drop3", "task")
 	case isDrop4Notify(m, "") && err == nil:
 		key = formatKey(user.ID, "drop4", "task")
 	default:
