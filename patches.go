@@ -7,8 +7,7 @@ import (
 type PatchType int
 
 const (
-	Undefined PatchType = iota
-	Flower
+	Flower PatchType = iota
 	Herb
 	FruitTree
 	Celastrus
@@ -42,6 +41,8 @@ const (
 	// Cactus
 	Cactus
 	PotatoCactus
+
+	Undefined
 )
 
 func (p PatchType) Stages() uint {

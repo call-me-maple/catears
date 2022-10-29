@@ -89,7 +89,7 @@ func processReaction(r *bokchoy.Request) (err error) {
 	// Drop 1 repeat check
 	case isDrop1Notify(me, mr.UserID) && mr.Emoji.Name == "🔁" && !hasBotReacted(me.Reactions, "✅"):
 		err = sendDrop(&DropOptions{
-			Length:    1,
+			Length:    3,
 			ChannelID: mr.ChannelID,
 			MessageID: mr.MessageID,
 			UserID:    mr.UserID,
