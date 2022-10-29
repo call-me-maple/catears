@@ -224,7 +224,7 @@ func sendStatus(m *discordgo.Message) (err error) {
 	case isCommand(m, "jane"):
 		key = formatKey(m.Author.ID, "contract", "task")
 	case isCommand(m, "d1"):
-		key = formatKey(m.Author.ID, "drop1", "task")
+		key = formatKey(m.Author.ID, "drop3", "task")
 	case isCommand(m, "d4"):
 		key = formatKey(m.Author.ID, "drop4", "task")
 	case isBHNotify(m, "") && err == nil:
