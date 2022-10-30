@@ -68,7 +68,7 @@ func isDrop1Notify(m *discordgo.Message, userID string) (b bool) {
 	} else {
 		b = true
 	}
-	return b && strings.Contains(m.Content, "Placeholder drop 1!") && m.Author.ID == dg.State.User.ID
+	return b && strings.Contains(m.Content, "Placeholder drop 3!") && m.Author.ID == dg.State.User.ID
 }
 
 func isDrop4Notify(m *discordgo.Message, userID string) (b bool) {
