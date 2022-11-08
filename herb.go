@@ -98,7 +98,15 @@ func sendHerb(o *HerbOptions) (err error) {
 	client.Set(taskKey, task.ID, wait)
 	log.Println("set", taskKey, "=", task.ID)
 
-	_, err = publishReaction(o.ChannelID, o.MessageID, "✅")
+	reaction := &Reaction{
+		ChannelId: o.ChannelID,
+		MessageID: o.MessageID,
+		Emoji: &discordgo.Emoji{
+			ID: "✅",
+		},
+	}
+
+	_, err = publishReaction(reaction)
 	if err != nil {
 		return
 	}

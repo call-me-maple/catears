@@ -172,7 +172,15 @@ func sendMessage(r *bokchoy.Request) (err error) {
 	log.Println("sent message:", sent.Content)
 
 	if m.Reaction != "" {
-		_, err = publishReaction(m.ChannelID, sent.ID, m.Reaction)
+		reaction := &Reaction{
+			ChannelId: m.ChannelID,
+			MessageID: sent.ID,
+			Emoji: &discordgo.Emoji{
+				ID: m.Reaction,
+			},
+		}
+
+		_, err = publishReaction(reaction)
 		if err != nil {
 			return
 		}

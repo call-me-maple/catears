@@ -30,6 +30,8 @@ func lookForMemes(m *discordgo.MessageCreate) (err error) {
 		content = "nani"
 	case "oic":
 		content = "<:oic:977400562381365339>"
+	case "gm":
+		content = "<a:gm:1027902914682961921>"
 	default:
 		return
 	}
@@ -45,17 +47,22 @@ func lookForMemes(m *discordgo.MessageCreate) (err error) {
 }
 
 func respondToMention(m *discordgo.MessageCreate) error {
-	var emoji string
+	out := &Reaction{
+		ChannelId: m.ChannelID,
+		MessageID: m.ID,
+		Emoji:     &discordgo.Emoji{},
+	}
+
 	switch {
 	case strings.Contains(m.Content, "r?"):
-		emoji = "✅"
+		out.Emoji.ID = "✅"
 	case strings.Contains(m.Content, "gm"):
-		emoji = "😺"
+		out.Emoji.ID = "gm:1027902914682961921"
 	default:
 		return nil
 	}
 
-	_, err := publishReaction(m.ChannelID, m.ID, emoji)
+	_, err := publishReaction(out)
 	if err != nil {
 		return err
 	}

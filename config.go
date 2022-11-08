@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/bwmarrin/discordgo"
-	"github.com/pkg/errors"
 	"log"
 	"strings"
+
+	"github.com/bwmarrin/discordgo"
+	"github.com/pkg/errors"
 )
 
 type ConfigOptions struct {
@@ -46,7 +47,15 @@ func saveConfig(o *ConfigOptions) (err error) {
 	key := strings.Join([]string{"config", o.UserID, o.Key}, ":")
 	client.Set(key, o.Value, 0)
 	log.Println("set", key, "=", o.Value)
-	_, err = publishReaction(o.ChannelID, o.MessageID, "✅")
+
+	reaction := &Reaction{
+		ChannelId: o.ChannelID,
+		MessageID: o.MessageID,
+		Emoji: &discordgo.Emoji{
+			ID: "✅",
+		},
+	}
+	_, err = publishReaction(reaction)
 	if err != nil {
 		return
 	}

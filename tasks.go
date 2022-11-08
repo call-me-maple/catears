@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"log"
 
-	"github.com/bwmarrin/discordgo"
 	"github.com/go-redis/redis/v7"
 	"github.com/thoas/bokchoy"
 )
@@ -27,17 +26,8 @@ func cancelTask(key string) error {
 	return nil
 }
 
-//TODO pass Reaction ref instead
-func publishReaction(channelID, messageID, emoji string, options ...bokchoy.Option) (task *bokchoy.Task, err error) {
-	out := &Reaction{
-		ChannelId: channelID,
-		MessageID: messageID,
-		Emoji: &discordgo.Emoji{
-			ID: emoji,
-		},
-	}
-
-	data, err := json.Marshal(out)
+func publishReaction(r *Reaction, options ...bokchoy.Option) (task *bokchoy.Task, err error) {
+	data, err := json.Marshal(r)
 	if err != nil {
 		log.Println(err)
 		return
