@@ -199,7 +199,7 @@ func countDown(m *discordgo.Message) (err error) {
 			ChannelID:   m.ChannelID,
 			MessageSend: &discordgo.MessageSend{Content: "now?"},
 		},
-		bokchoy.WithCountdown(time.Duration(rand.Intn((wait/2)+10))*time.Second))
+		bokchoy.WithCountdown(time.Duration(rand.Intn(wait*4/3))*time.Second))
 	if err != nil {
 		return
 	}
