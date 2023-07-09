@@ -15,7 +15,7 @@ import (
 	"github.com/thoas/bokchoy"
 )
 
-func lookForMemes(m *discordgo.MessageCreate) (err error) {
+func lookForMemes(m *discordgo.Message) (err error) {
 	var content string
 	switch strings.ToLower(m.Content) {
 	case "ping":
@@ -46,7 +46,7 @@ func lookForMemes(m *discordgo.MessageCreate) (err error) {
 	return
 }
 
-func respondToMention(m *discordgo.MessageCreate) error {
+func respondToMention(m *discordgo.Message) error {
 	out := &Reaction{
 		ChannelId: m.ChannelID,
 		MessageID: m.ID,

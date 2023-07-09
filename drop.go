@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
@@ -14,6 +15,13 @@ type DropOptions struct {
 	MessageID string
 	UserID    string
 	Length    int
+}
+
+func parseDrop(m *discordgo.MessageCreate) (err error) {
+	if len(m.Content) < 1 || strings.ToLower(m.Content)[0] != 'd' {
+
+	}
+	return
 }
 
 func runDrop1(m *discordgo.MessageCreate) (err error) {

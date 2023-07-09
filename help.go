@@ -10,6 +10,9 @@ import (
 
 func allReady(users []*discordgo.MessageReactions) bool {
 	// TODO look at guild and count active users
+	if os.Getenv("ENV") == "DEV" {
+		return true
+	}
 	return countReactions(users, "✅") == 3
 }
 
@@ -20,7 +23,7 @@ func isCommand(m *discordgo.Message, keyword string) bool {
 }
 
 func isNotifyCommand(m *discordgo.Message) bool {
-	return isCommand(m, "herb") || isCommand(m, "bh") || isCommand(m, "jane") || isCommand(m, "d1") || isCommand(m, "d4")
+	return isCommand(m, "herb") || isCommand(m, "bh") || isCommand(m, "jane")
 }
 
 func splitCommand(content, keyword string) []string {
@@ -41,7 +44,7 @@ func isConfigKey(key string) bool {
 }
 
 func isNotify(m *discordgo.Message, userID string) (b bool) {
-	return isBHNotify(m, userID) || isHerbNotify(m, userID) || isContractNotify(m, userID) || isDrop1Notify(m, userID) || isDrop4Notify(m, userID)
+	return isBHNotify(m, userID) || isHerbNotify(m, userID) || isContractNotify(m, userID)
 }
 
 func isBHNotify(m *discordgo.Message, userID string) (b bool) {
@@ -60,24 +63,6 @@ func isHerbNotify(m *discordgo.Message, userID string) (b bool) {
 		b = true
 	}
 	return b && strings.Contains(m.Content, "Herbs are grown!") && m.Author.ID == dg.State.User.ID
-}
-
-func isDrop1Notify(m *discordgo.Message, userID string) (b bool) {
-	if userID != "" {
-		b = isUserMentioned(m.Mentions, userID)
-	} else {
-		b = true
-	}
-	return b && strings.Contains(m.Content, "Placeholder drop 3!") && m.Author.ID == dg.State.User.ID
-}
-
-func isDrop4Notify(m *discordgo.Message, userID string) (b bool) {
-	if userID != "" {
-		b = isUserMentioned(m.Mentions, userID)
-	} else {
-		b = true
-	}
-	return b && strings.Contains(m.Content, "Placeholder drop 4!") && m.Author.ID == dg.State.User.ID
 }
 
 func isContractNotify(m *discordgo.Message, userID string) (b bool) {
@@ -115,4 +100,12 @@ func getTickTime(offset, tickRate, ticks int64) time.Time {
 	goalTick := currentTick + (ticks * tickRate * 60)
 
 	return time.Unix(goalTick-calcOffset, 0)
+}
+
+func initCommands() []Command {
+	var commands []Command
+
+	commands = append(commands, NewHerb())
+
+	return commands
 }

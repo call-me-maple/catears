@@ -21,33 +21,38 @@ type HerbOptions struct {
 	UserID    string
 }
 
-func runHerb(m *discordgo.MessageCreate) (err error) {
-	options := &HerbOptions{
-		Stage:     1,
-		ChannelID: m.ChannelID,
-		MessageID: m.ID,
-		UserID:    m.Author.ID,
-	}
+func NewHerb() *HerbOptions {
+	return &HerbOptions{}
+}
 
-	err = parseHerb(m.Content, options)
+func (o *HerbOptions) parse(m *discordgo.Message) (err error) {
+	buf := new(bytes.Buffer)
+	// TODO clean message into str
+	str := m.Content
+	cmd := flag.NewFlagSet("herb", flag.ContinueOnError)
+	cmd.SetOutput(buf)
+	cmd.UintVar(&o.Stage, "s", 1, "The current growth stage. 1-4")
+	cmd.UintVar(&o.Remainder, "r", 0, "How many growth stages left.")
+	err = cmd.Parse(splitCommand(str, "herb"))
 	if err != nil {
-		_, err = publishMessage(&Message{
-			ChannelID:   m.ChannelID,
-			MessageSend: &discordgo.MessageSend{Content: fmt.Sprintf("%v", err)},
-		})
-		if err != nil {
-			return
-		}
-		return
+		err = errors.Errorf("%v", buf.String())
 	}
-	err = sendHerb(options)
-	if err != nil {
-		return
-	}
+	o.ChannelID = m.ChannelID
+	o.MessageID = m.ID
+	o.UserID = m.Author.ID
 	return
 }
 
-func sendHerb(o *HerbOptions) (err error) {
+func (o *HerbOptions) validate() error {
+	switch {
+	case o.Stage < 1 || o.Stage > 4:
+		return errors.Errorf("Growth stage must be between 1-4.")
+	default:
+		return nil
+	}
+}
+
+func (o *HerbOptions) run() (err error) {
 	taskKey := formatKey(o.UserID, "herb", "task")
 	err = cancelTask(taskKey)
 	if err != nil {
@@ -113,26 +118,28 @@ func sendHerb(o *HerbOptions) (err error) {
 	return
 }
 
-func parseHerb(str string, options *HerbOptions) (err error) {
-	buf := new(bytes.Buffer)
-
-	cmd := flag.NewFlagSet("herb", flag.ContinueOnError)
-	cmd.SetOutput(buf)
-	cmd.UintVar(&options.Stage, "s", 1, "The current growth stage. 1-4")
-	cmd.UintVar(&options.Remainder, "r", 0, "How many growth stages left.")
-	err = cmd.Parse(splitCommand(str, "herb"))
-	if err != nil {
-		err = errors.Errorf("%v", buf.String())
-		return
-	}
-
-	return options.validate()
-}
-
-func (options *HerbOptions) validate() (err error) {
-	switch {
-	case options.Stage < 1 || options.Stage > 4:
-		return errors.Errorf("Growth stage must be between 1-4.")
-	}
-	return
-}
+//func runHerb(m *discordgo.MessageCreate) (err error) {
+//	options := &HerbOptions{
+//		Stage:     1,
+//		ChannelID: m.ChannelID,
+//		MessageID: m.ID,
+//		UserID:    m.Author.ID,
+//	}
+//
+//	err = parseHerb(m.Content, options)
+//	if err != nil {
+//		_, err = publishMessage(&Message{
+//			ChannelID:   m.ChannelID,
+//			MessageSend: &discordgo.MessageSend{Content: fmt.Sprintf("%v", err)},
+//		})
+//		if err != nil {
+//			return
+//		}
+//		return
+//	}
+//	err = sendHerb(options)
+//	if err != nil {
+//		return
+//	}
+//	return
+//}

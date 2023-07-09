@@ -79,29 +79,13 @@ func processReaction(r *bokchoy.Request) (err error) {
 			MessageID: mr.MessageID,
 			UserID:    mr.UserID})
 	// Herb repeat check
-	case isHerbNotify(me, mr.UserID) && mr.Emoji.Name == "🔁" && !hasBotReacted(me.Reactions, "✅"):
-		err = sendHerb(&HerbOptions{
-			Remainder: Herb.Stages() - 1,
-			ChannelID: mr.ChannelID,
-			MessageID: mr.MessageID,
-			UserID:    mr.UserID,
-		})
-	// Drop 1 repeat check
-	case isDrop1Notify(me, mr.UserID) && mr.Emoji.Name == "🔁" && !hasBotReacted(me.Reactions, "✅"):
-		err = sendDrop(&DropOptions{
-			Length:    3,
-			ChannelID: mr.ChannelID,
-			MessageID: mr.MessageID,
-			UserID:    mr.UserID,
-		})
-	// Drop 4 repeat check
-	case isDrop4Notify(me, mr.UserID) && mr.Emoji.Name == "🔁" && !hasBotReacted(me.Reactions, "✅"):
-		err = sendDrop(&DropOptions{
-			Length:    4,
-			ChannelID: mr.ChannelID,
-			MessageID: mr.MessageID,
-			UserID:    mr.UserID,
-		})
+	//case isHerbNotify(me, mr.UserID) && mr.Emoji.Name == "🔁" && !hasBotReacted(me.Reactions, "✅"):
+	//	err = sendHerb(&HerbOptions{
+	//		Remainder: Herb.Stages() - 1,
+	//		ChannelID: mr.ChannelID,
+	//		MessageID: mr.MessageID,
+	//		UserID:    mr.UserID,
+	//	})
 	// Status check
 	case (isNotify(me, "") || isNotifyCommand(me)) && mr.Emoji.Name == "❓":
 		err = sendStatus(me)
@@ -117,43 +101,33 @@ func processReaction(r *bokchoy.Request) (err error) {
 
 func processMessage(r *bokchoy.Request) (err error) {
 	res := fmt.Sprintf("%v", r.Task.Payload)
-	m := new(discordgo.MessageCreate)
-	err = m.UnmarshalJSON([]byte(res))
+
+	// Populate MessageCreate with values
+	mc := new(discordgo.MessageCreate)
+	err = mc.UnmarshalJSON([]byte(res))
 	if err != nil {
 		log.Println(err)
 		return err
 	}
+
 	// Query full message info
-	me, err := dg.ChannelMessage(m.ChannelID, m.ID)
+	m, err := dg.ChannelMessage(mc.ChannelID, mc.ID)
 	if err != nil {
-		fmt.Println("failed to grab message", err)
+		log.Println("failed to grab message", err)
 		return
 	}
 
-	switch {
-	case isCommand(me, "jane"):
-		err = runContract(m)
-	case isCommand(me, "music?"):
-		err = findMusic(m)
-	case isCommand(me, "bh"):
-		err = runBirdHouse(m)
-	case isCommand(me, "herb"):
-		err = runHerb(m)
-	case isCommand(me, "config"):
-		err = runConfig(m)
-	case isCommand(me, "d1"):
-		err = runDrop1(m)
-	case isCommand(me, "d4"):
-		err = runDrop4(m)
-	case isBotMentioned(m.Mentions):
-		err = respondToMention(m)
-	default:
-		err = lookForMemes(m)
+	commands := initCommands()
+	for _, command := range commands {
+		command.parse(m)
+		command.validate()
+		command.run()
 	}
-	if err != nil {
-		log.Println(err)
+
+	if isBotMentioned(m.Mentions) {
+		return respondToMention(m)
 	}
-	return
+	return lookForMemes(m)
 }
 
 func sendMessage(r *bokchoy.Request) (err error) {

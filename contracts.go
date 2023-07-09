@@ -85,7 +85,7 @@ func sendContract(o *ContractOptions) (err error) {
 		o.Remainder = o.Type.Stages() - o.Stage
 	}
 	log.Println("offset", int64(offset), "tickRate", int64(o.Type.TickRate().Minutes()), "ticks", int64(o.Remainder))
-	finish := getTickTime(int64(offset), int64(o.Type.TickRate().Minutes()), int64(o.Remainder))
+	finish := o.Type.getTickTime(int64(offset), int64(o.Remainder))
 	wait := time.Until(finish)
 
 	log.Printf("contract done in: %v at: %v\n", wait, finish)
@@ -137,7 +137,7 @@ func parseContract(str string, options *ContractOptions) (err error) {
 		return errors.Errorf("%v\n%v", err, buf.String())
 	}
 	if opts.NArgs() > 0 {
-		options.Type = FindPatchType(opts.Arg(0))
+		options.Type, _ = FindPatchType(opts.Arg(0))
 		err = opts.Getopt(opts.Args(), nil)
 		if err != nil {
 			buf := new(bytes.Buffer)

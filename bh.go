@@ -108,3 +108,7 @@ func (options *BHOptions) validate() (err error) {
 	}
 	return
 }
+
+func NewBH() *BHOptions {
+	return &BHOptions{}
+}
