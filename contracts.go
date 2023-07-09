@@ -137,7 +137,10 @@ func parseContract(str string, options *ContractOptions) (err error) {
 		return errors.Errorf("%v\n%v", err, buf.String())
 	}
 	if opts.NArgs() > 0 {
-		options.Type = FindPatchType(opts.Arg(0))
+		options.Type, err = FindPatchType(opts.Arg(0))
+		if err != nil {
+			return
+		}
 		err = opts.Getopt(opts.Args(), nil)
 		if err != nil {
 			buf := new(bytes.Buffer)
