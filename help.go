@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"os"
 	"sort"
 	"strings"
@@ -73,17 +74,19 @@ func formatKey(parts ...string) string {
 }
 
 func isDev(guildID, channelID string) bool {
+	dev := os.Getenv("ENV") != "DEV"
+
 	channels, err := dg.GuildChannels(guildID)
 	if err != nil {
 		return false
 	}
-	dev, err := findChannel(channels, "dev")
-	if err == nil {
-		if os.Getenv("ENV") != "DEV" && dev.ID == channelID {
-			return true
-		}
+	c, err := findChannel(channels, "dev")
+	if err != nil {
+		log.Println(err)
+		return true
 	}
-	return false
+
+	return dev == (c.ID == channelID)
 }
 
 func didYouMean(search string, words []string) error {
