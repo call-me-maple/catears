@@ -12,6 +12,7 @@ import (
 )
 
 func messageCreated(s *discordgo.Session, m *discordgo.MessageCreate) {
+	// Don't care about the bot's messages
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
@@ -32,6 +33,7 @@ func messageCreated(s *discordgo.Session, m *discordgo.MessageCreate) {
 }
 
 func reactionCreated(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
+	// Don't care about the bot's reactions
 	if r.UserID == s.State.User.ID {
 		return
 	}
@@ -67,34 +69,38 @@ func processReaction(r *bokchoy.Request) (err error) {
 		return
 	}
 
-	switch {
-	// Count-down ready check
-	case isCommand(me, "r?") && allReady(me.Reactions):
-		err = countDown(me)
-	// Bird House repeat check
-	case isBHNotify(me, mr.UserID) && mr.Emoji.Name == "🔁" && !hasBotReacted(me.Reactions, "✅"):
-		err = sendBH(&BHOptions{
-			Seeds:     10,
-			ChannelID: mr.ChannelID,
-			MessageID: mr.MessageID,
-			UserID:    mr.UserID})
-	// Herb repeat check
-	//case isHerbNotify(me, mr.UserID) && mr.Emoji.Name == "🔁" && !hasBotReacted(me.Reactions, "✅"):
-	//	err = sendHerb(&HerbOptions{
-	//		Remainder: Herb.Stages() - 1,
-	//		ChannelID: mr.ChannelID,
-	//		MessageID: mr.MessageID,
-	//		UserID:    mr.UserID,
-	//	})
-	// Status check
-	case (isNotify(me, "") || isNotifyCommand(me)) && mr.Emoji.Name == "❓":
-		err = sendStatus(me)
-	// Archive check
-	case len(me.Embeds) != 0 && mr.Emoji.Name == "✅":
-		err = archive(mr)
+	for _, c := range initCommands() {
+		rc, ok := c.(ReactCommand)
+		if !ok {
+			continue
+		}
+
+		switch {
+		case matchesKeyword(me, rc):
+			log.Printf("reacted:%v keyword matchh\n", mr.Emoji.Name)
+			err = rc.parse(me)
+		case matchesNotifcation(me, rc):
+			log.Printf("reacted:%v notif matchh\n", mr.Emoji.Name)
+			err = rc.parseNotification(me)
+		default:
+			continue
+		}
+		if err != nil {
+			log.Println(err)
+			return
+		}
+
+		if r, ok := rc.(Repeater); ok && mr.Emoji.Name == "🔁" && isUserMentioned(me.Mentions, mr.UserID) {
+			return r.repeat(mr)
+		}
+		if s, ok := rc.(Statuser); ok && mr.Emoji.Name == "❓" {
+			return sendStatus(me, s.getStatusKey())
+		}
 	}
-	if err != nil {
-		log.Println(err)
+
+	// Count-down ready check
+	if isCommand(me, "r?") && allReady(me.Reactions) {
+		err = countDown(me)
 	}
 	return
 }
@@ -117,15 +123,41 @@ func processMessage(r *bokchoy.Request) (err error) {
 		return
 	}
 
-	commands := initCommands()
-	for _, command := range commands {
-		command.parse(m)
-		command.validate()
-		command.run()
-	}
+	keywords := []string{}
+	for _, c := range initCommands() {
+		mc, ok := c.(MessageCommand)
+		if !ok {
+			continue
+		}
 
+		if !matchesKeyword(m, mc) {
+			keywords = append(keywords, mc.getKeywords()...)
+			continue
+		}
+		err = mc.parse(m)
+		if err != nil {
+			_, err = publishMessage(&Message{
+				ChannelID:   m.ChannelID,
+				MessageSend: &discordgo.MessageSend{Content: fmt.Sprintf("%v", err)},
+			})
+			return err
+		}
+		return mc.run()
+	}
 	if isBotMentioned(m.Mentions) {
-		return respondToMention(m)
+		responded, err := respondToMention(m)
+		if err != nil || responded {
+			return err
+		}
+
+		err = didYouMean(prepCommand(m)[0], keywords)
+		if err != nil {
+			_, err = publishMessage(&Message{
+				ChannelID:   m.ChannelID,
+				MessageSend: &discordgo.MessageSend{Content: fmt.Sprintf("%v", err)},
+			})
+		}
+		return err
 	}
 	return lookForMemes(m)
 }
@@ -197,7 +229,7 @@ func checkin(req *bokchoy.Request) (err error) {
 	switch err {
 	case nil:
 	case redis.Nil:
-		content := fmt.Sprintf("I think your %v are still ready <@%v>...", f.Type, f.UserID)
+		content := fmt.Sprintf("I think your %v are still ready <@%v>...", f.Name, f.UserID)
 		_, err = publishMessage(&Message{
 			ChannelID:   f.ChannelID,
 			MessageSend: &discordgo.MessageSend{Content: content},

@@ -46,7 +46,7 @@ func lookForMemes(m *discordgo.Message) (err error) {
 	return
 }
 
-func respondToMention(m *discordgo.Message) error {
+func respondToMention(m *discordgo.Message) (bool, error) {
 	out := &Reaction{
 		ChannelId: m.ChannelID,
 		MessageID: m.ID,
@@ -59,100 +59,14 @@ func respondToMention(m *discordgo.Message) error {
 	case strings.Contains(m.Content, "gm"):
 		out.Emoji.ID = "gm:1027902914682961921"
 	default:
-		return nil
+		return false, nil
 	}
 
 	_, err := publishReaction(out)
 	if err != nil {
-		return err
+		return true, err
 	}
-	return nil
-}
-
-func findMusic(m *discordgo.MessageCreate) error {
-	channels, err := dg.GuildChannels(m.GuildID)
-	if err != nil {
-		return err
-	}
-	// Find music backlog channels
-	var music *discordgo.Channel
-	for _, channel := range channels {
-		if channel.Name == "music" {
-			music = channel
-			break
-		}
-	}
-	// Pull messages from music backlog
-	messages, err := dg.ChannelMessages(music.ID, 100, music.LastMessageID, "", "")
-	if err != nil {
-		fmt.Println("failed to query messages from music", err)
-		return err
-	}
-	// Only recommend messages with links
-	var linksOnly []*discordgo.Message
-	for _, message := range messages {
-		if len(message.Embeds) != 0 {
-			linksOnly = append(linksOnly, message)
-		}
-	}
-
-	// Send a random message with a link
-	randMusic := linksOnly[rand.Intn(len(linksOnly))]
-	_, err = publishMessage(&Message{
-		ChannelID:   m.ChannelID,
-		MessageSend: &discordgo.MessageSend{Content: randMusic.Content},
-	})
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func archive(r *discordgo.MessageReactionAdd) (err error) {
-	// Find history and backlog channels
-	log.Println("in archive")
-	channels, err := dg.GuildChannels(r.GuildID)
-
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	backlog, err := findChannel(channels, "music")
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	history, err := findChannel(channels, "history")
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	// Only move from backlog
-	if r.ChannelID != backlog.ID {
-		return
-	}
-
-	// Check for link in message
-	// Query full message info
-	me, err := dg.ChannelMessage(r.ChannelID, r.MessageID)
-	if err != nil {
-		log.Println("failed to grab message", err)
-		return
-	}
-	// Delete old message in backlog
-	err = dg.ChannelMessageDelete(backlog.ID, r.MessageID)
-	if err != nil {
-		log.Println("failed to delete old message", err)
-		return
-	}
-	// Create new message in history
-	_, err = dg.ChannelMessageSend(history.ID, me.Content)
-	if err != nil {
-		log.Println("failed to send new message", err)
-		return
-	}
-	return
+	return true, nil
 }
 
 func countDown(m *discordgo.Message) (err error) {
@@ -220,37 +134,10 @@ func countDown(m *discordgo.Message) (err error) {
 	return
 }
 
-func sendStatus(m *discordgo.Message) (err error) {
-	user, err := findMentionedUser(m.Mentions)
-	var key string
-	switch {
-	case isCommand(m, "bh"):
-		key = formatKey(m.Author.ID, "bh", "task")
-	case isCommand(m, "herb"):
-		key = formatKey(m.Author.ID, "herb", "task")
-	case isCommand(m, "jane"):
-		key = formatKey(m.Author.ID, "contract", "task")
-	case isCommand(m, "d1"):
-		key = formatKey(m.Author.ID, "drop3", "task")
-	case isCommand(m, "d4"):
-		key = formatKey(m.Author.ID, "drop4", "task")
-	case isBHNotify(m, "") && err == nil:
-		key = formatKey(user.ID, "bh", "task")
-	case isHerbNotify(m, "") && err == nil:
-		key = formatKey(user.ID, "herb", "task")
-	case isContractNotify(m, "") && err == nil:
-		key = formatKey(user.ID, "contract", "task")
-	case isDrop1Notify(m, "") && err == nil:
-		key = formatKey(user.ID, "drop3", "task")
-	case isDrop4Notify(m, "") && err == nil:
-		key = formatKey(user.ID, "drop4", "task")
-	default:
-		// Nothing to give status on
-		return nil
-	}
-
+func sendStatus(m *discordgo.Message, key string) (err error) {
 	var content string
 	taskID, err := client.Get(key).Result()
+	log.Println(key, taskID)
 	switch err {
 	case nil:
 		if task, err := messageSend.Get(context.Background(), taskID); err == nil {

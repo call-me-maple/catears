@@ -46,12 +46,3 @@ func countReactions(mr []*discordgo.MessageReactions, emoji string) (c int) {
 	}
 	return
 }
-
-func hasBotReacted(mr []*discordgo.MessageReactions, emoji string) bool {
-	for _, r := range mr {
-		if r.Me && r.Emoji.Name == emoji {
-			return true
-		}
-	}
-	return false
-}

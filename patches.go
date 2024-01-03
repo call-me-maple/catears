@@ -2,6 +2,7 @@ package main
 
 import (
 	"sort"
+	"sync"
 	"time"
 
 	"github.com/lithammer/fuzzysearch/fuzzy"
@@ -111,10 +112,11 @@ const (
 	Cactus
 	PotatoCactus
 
+	DidYouMean
 	Undefined
 )
 
-func (p PatchType) PatchNames() []string {
+func (p PatchType) Names() []string {
 	switch p {
 	case Flower:
 		return []string{"flowers", "flower"}
@@ -131,7 +133,7 @@ func (p PatchType) PatchNames() []string {
 	case WhiteLily:
 		return []string{"whitelily", "lily", "wl"}
 	case Herb:
-		return []string{"herb", "herbs"}
+		return []string{"herbs", "herb"}
 	case Guam:
 		return []string{"guam"}
 	case Marrentill:
@@ -273,6 +275,14 @@ func (p PatchType) PatchNames() []string {
 	}
 }
 
+func (p PatchType) Name() string {
+	names := p.Names()
+	if len(names) > 0 {
+		return names[0]
+	}
+	return "undefined"
+}
+
 func (p PatchType) getTickTime(offset, ticks int64) time.Time {
 	tickRate := int64(p.TickRate().Minutes())
 	calcOffset := (offset % tickRate * 60)
@@ -330,25 +340,68 @@ func (p PatchType) TickRate() time.Duration {
 	case Redwood, Hespori, Kronos, Iasor, Attas, Teak, Mahogany:
 		return 640 * time.Minute
 	default:
-		return -1
+		return -1 * time.Minute
 	}
 }
 
-func FindPatchType(search string) (PatchType, error) {
-	var allNames []string
+var (
+	allPatchesCache    map[string]PatchType
+	allPatchNamesCache []string
+	cacheInitialized   bool
+	cacheMutex         sync.Mutex
+)
+
+func initializePatchCache() {
+	allPatchesCache = make(map[string]PatchType)
+	allPatchNamesCache = nil
+
 	for p := first; p < Undefined; p++ {
-		allNames = append(allNames, p.PatchNames()...)
-		for _, patchName := range p.PatchNames() {
-			if search == patchName {
-				return p, nil
-			}
+		names := p.Names()
+		allPatchNamesCache = append(allPatchNamesCache, names...)
+		for _, name := range names {
+			allPatchesCache[name] = p
 		}
 	}
-	suggestions := fuzzy.RankFind(search, allNames)
-	sort.Sort(suggestions)
-	if len(suggestions) != 0 && suggestions[0].Distance < 10 {
-		return Undefined, errors.Errorf("Did you mean? %v", suggestions[0].Target)
+
+	sort.Strings(allPatchNamesCache)
+	cacheInitialized = true
+}
+
+func AllPatchNames() []string {
+	cacheMutex.Lock()
+	defer cacheMutex.Unlock()
+
+	if !cacheInitialized {
+		initializePatchCache()
 	}
 
-	return Undefined, errors.Errorf("Not sure the patch :o")
+	return allPatchNamesCache
+}
+
+func AllPatches() map[string]PatchType {
+	cacheMutex.Lock()
+	defer cacheMutex.Unlock()
+
+	if !cacheInitialized {
+		initializePatchCache()
+	}
+
+	return allPatchesCache
+}
+
+func FindPatchType(search string) (PatchType, error) {
+	patch, exists := AllPatches()[search]
+	if exists && patch != Undefined {
+		return patch, nil
+	}
+	suggestions := fuzzy.RankFind(search, AllPatchNames())
+	sort.Slice(suggestions, func(i, j int) bool {
+		return suggestions[i].Distance < suggestions[j].Distance
+	})
+	switch {
+	case len(suggestions) > 0 && suggestions[0].Distance < 10:
+		return DidYouMean, errors.Errorf("Did you mean? %v", suggestions[0].Target)
+	default:
+		return Undefined, errors.Errorf("Not sure the patch :o")
+	}
 }

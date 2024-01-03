@@ -2,10 +2,13 @@ package main
 
 import (
 	"os"
+	"sort"
 	"strings"
-	"time"
 
+	"github.com/alexflint/go-arg"
 	"github.com/bwmarrin/discordgo"
+	"github.com/lithammer/fuzzysearch/fuzzy"
+	"github.com/pkg/errors"
 )
 
 func allReady(users []*discordgo.MessageReactions) bool {
@@ -16,20 +19,42 @@ func allReady(users []*discordgo.MessageReactions) bool {
 	return countReactions(users, "✅") == 3
 }
 
+func matchesKeyword(m *discordgo.Message, kp KeywordProvider) bool {
+	for _, keyword := range kp.getKeywords() {
+		if isCommand(m, keyword) {
+			return true
+		}
+	}
+	return false
+}
+
+func matchesNotifcation(m *discordgo.Message, np NotificationPatterner) bool {
+	return np.getPattern().MatchString(m.Content) &&
+		m.Author.ID == dg.State.User.ID
+}
+
 func isCommand(m *discordgo.Message, keyword string) bool {
 	keyword = strings.ToLower(strings.TrimSpace(keyword))
 	content := strings.ToLower(m.Content)
-	return (strings.Contains(content, keyword+" ") || strings.HasSuffix(content, keyword)) && isBotMentioned(m.Mentions)
-}
-
-func isNotifyCommand(m *discordgo.Message) bool {
-	return isCommand(m, "herb") || isCommand(m, "bh") || isCommand(m, "jane")
+	return (strings.Contains(content, keyword+" ") || strings.HasSuffix(content, keyword)) &&
+		isBotMentioned(m.Mentions)
 }
 
 func splitCommand(content, keyword string) []string {
 	str := strings.TrimSpace(content)
 	_, after, _ := strings.Cut(str, keyword+" ")
 	return strings.Split(after, " ")
+}
+func prepCommand(m *discordgo.Message) []string {
+	// strips any user mentions from message and splits string
+	content := m.Content
+	for _, user := range m.Mentions {
+		content = strings.NewReplacer(
+			"<@"+user.ID+">", "",
+			"<@!"+user.ID+">", "",
+		).Replace(content)
+	}
+	return strings.Split(strings.TrimSpace(content), " ")
 }
 
 func isConfigKey(key string) bool {
@@ -41,37 +66,6 @@ func isConfigKey(key string) bool {
 		}
 	}
 	return false
-}
-
-func isNotify(m *discordgo.Message, userID string) (b bool) {
-	return isBHNotify(m, userID) || isHerbNotify(m, userID) || isContractNotify(m, userID)
-}
-
-func isBHNotify(m *discordgo.Message, userID string) (b bool) {
-	if userID != "" {
-		b = isUserMentioned(m.Mentions, userID)
-	} else {
-		b = true
-	}
-	return b && strings.Contains(m.Content, "Bird houses are ready!") && m.Author.ID == dg.State.User.ID
-}
-
-func isHerbNotify(m *discordgo.Message, userID string) (b bool) {
-	if userID != "" {
-		b = isUserMentioned(m.Mentions, userID)
-	} else {
-		b = true
-	}
-	return b && strings.Contains(m.Content, "Herbs are grown!") && m.Author.ID == dg.State.User.ID
-}
-
-func isContractNotify(m *discordgo.Message, userID string) (b bool) {
-	if userID != "" {
-		b = isUserMentioned(m.Mentions, userID)
-	} else {
-		b = true
-	}
-	return b && strings.Contains(m.Content, "Contract is ready! Goodluck!") && m.Author.ID == dg.State.User.ID
 }
 
 func formatKey(parts ...string) string {
@@ -92,20 +86,46 @@ func isDev(guildID, channelID string) bool {
 	return false
 }
 
-func getTickTime(offset, tickRate, ticks int64) time.Time {
-	calcOffset := (offset % tickRate) * 60
-	unixNow := time.Now().Unix() + calcOffset
-
-	currentTick := (unixNow - (unixNow % (tickRate * 60)))
-	goalTick := currentTick + (ticks * tickRate * 60)
-
-	return time.Unix(goalTick-calcOffset, 0)
+func didYouMean(search string, words []string) error {
+	suggestions := fuzzy.RankFind(search, words)
+	sort.Slice(suggestions, func(i, j int) bool {
+		return suggestions[i].Distance < suggestions[j].Distance
+	})
+	switch {
+	case len(suggestions) > 0 && suggestions[0].Distance < 10:
+		return errors.Errorf("Did you mean? %v", suggestions[0].Target)
+	default:
+		return nil
+	}
 }
 
-func initCommands() []Command {
-	var commands []Command
-
-	commands = append(commands, NewHerb())
-
+func initCommands() (commands []Command) {
+	commands = append(commands, NewDrop())
+	commands = append(commands, NewPatchAlert())
+	commands = append(commands, NewConfig())
+	commands = append(commands, NewBH())
 	return commands
+}
+
+func parseMessage(m *discordgo.Message, args interface{}) error {
+	arg.Parse(args)
+	p, err := arg.NewParser(arg.Config{
+		IgnoreEnv: true,
+		Program:   "catears",
+	}, args)
+	if err != nil {
+		return err
+	}
+	err = p.Parse(prepCommand(m))
+	return err
+}
+
+func parseNotifier(m *discordgo.Message, n Notifier) map[string]string {
+	groups := make(map[string]string)
+	r := n.getPattern()
+	matches := r.FindStringSubmatch(m.Content)
+	for i, name := range r.SubexpNames() {
+		groups[name] = matches[i]
+	}
+	return groups
 }

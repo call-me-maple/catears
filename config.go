@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"log"
+	"strconv"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
@@ -10,61 +10,50 @@ import (
 )
 
 type ConfigOptions struct {
-	Key       string
-	Value     string
-	ChannelID string
-	MessageID string
-	UserID    string
+	Key   string
+	Value string
+	IDs   *DiscordTrigger
 }
 
-func runConfig(m *discordgo.MessageCreate) (err error) {
-	options := &ConfigOptions{
-		ChannelID: m.ChannelID,
-		MessageID: m.ID,
-		UserID:    m.Author.ID,
-	}
-
-	err = parseConfig(m.Content, options)
-	if err != nil {
-		_, err = publishMessage(&Message{
-			ChannelID:   m.ChannelID,
-			MessageSend: &discordgo.MessageSend{Content: fmt.Sprintf("%v", err)},
-		})
-
-		if err != nil {
-			return
-		}
-		return nil
-	}
-	err = saveConfig(options)
-	if err != nil {
-		return
-	}
-	return
+func NewConfig() *ConfigOptions {
+	return &ConfigOptions{IDs: new(DiscordTrigger)}
 }
 
-func saveConfig(o *ConfigOptions) (err error) {
-	key := strings.Join([]string{"config", o.UserID, o.Key}, ":")
+func (o *ConfigOptions) getName() string {
+	return o.getKeywords()[0]
+}
+
+func (o *ConfigOptions) getIDs() *DiscordTrigger {
+	return o.IDs
+}
+
+func (o *ConfigOptions) getKeywords() []string {
+	return []string{"config"}
+}
+
+func (o *ConfigOptions) run() (err error) {
+	key := strings.Join([]string{"config", o.IDs.UserID, o.Key}, ":")
 	client.Set(key, o.Value, 0)
 	log.Println("set", key, "=", o.Value)
 
 	reaction := &Reaction{
-		ChannelId: o.ChannelID,
-		MessageID: o.MessageID,
+		ChannelId: o.IDs.ChannelID,
+		MessageID: o.IDs.MessageID,
 		Emoji: &discordgo.Emoji{
 			ID: "✅",
 		},
 	}
 	_, err = publishReaction(reaction)
-	if err != nil {
-		return
-	}
 	return
 }
 
 // @catears config key=value
-func parseConfig(str string, options *ConfigOptions) (err error) {
-	parts := splitCommand(str, "config")
+func (options *ConfigOptions) parse(m *discordgo.Message) (err error) {
+	options.IDs.ChannelID = m.ChannelID
+	options.IDs.MessageID = m.ID
+	options.IDs.UserID = m.Author.ID
+
+	parts := splitCommand(m.Content, "config")
 	if len(parts) != 1 {
 		return errors.Errorf("Usage '@catears config key=value'")
 	}
@@ -77,6 +66,21 @@ func parseConfig(str string, options *ConfigOptions) (err error) {
 		options.Key, options.Value = parts[0], parts[1]
 	default:
 		return errors.Errorf("Usage '@catears config key=value'")
+	}
+	return
+}
+
+func (options *ConfigOptions) validate() error {
+	// TODO valididate config params
+	return nil
+}
+
+func getOffset(userID string) (offset int, err error) {
+	key := formatKey("config", userID, "offset")
+	result, _ := client.Get(key).Result()
+	offset, err = strconv.Atoi(result)
+	if err != nil {
+		err = errors.Errorf("No farm tick offset configured. Use '@catears config offset=value'")
 	}
 	return
 }

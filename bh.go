@@ -1,114 +1,98 @@
 package main
 
 import (
-	"bytes"
-	"flag"
 	"fmt"
-	"log"
+	"regexp"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/pkg/errors"
-	"github.com/thoas/bokchoy"
 )
 
 type BHOptions struct {
-	Seeds     int
-	ChannelID string
-	MessageID string
-	UserID    string
+	Args *BHArgs
+	IDs  *DiscordTrigger
 }
 
-func runBirdHouse(m *discordgo.MessageCreate) (err error) {
-	options := &BHOptions{
-		Seeds:     10,
-		ChannelID: m.ChannelID,
-		MessageID: m.ID,
-		UserID:    m.Author.ID,
-	}
+type BHArgs struct {
+	Trigger string `arg:"positional"` // Word thats triggering this cmd
+	Seeds   int    `arg:"-s" default:"10"`
+}
 
-	err = parseBH(m.Content, options)
-	if err != nil {
-		_, err = publishMessage(&Message{
-			ChannelID:   m.ChannelID,
-			MessageSend: &discordgo.MessageSend{Content: fmt.Sprintf("%v", err)},
-		})
-		if err != nil {
-			return
+func NewBH() *BHOptions {
+	return &BHOptions{IDs: new(DiscordTrigger), Args: new(BHArgs)}
+}
+
+func (o *BHOptions) getName() string {
+	return "bird houses"
+}
+
+func (o *BHOptions) getKeywords() []string {
+	return []string{"bh", "bird", "house", "birdhouse", "birdhouses", "birb"}
+}
+
+func (o *BHOptions) getIDs() *DiscordTrigger {
+	return o.IDs
+}
+
+func (o *BHOptions) getStatusKey() string {
+	return formatKey(o.IDs.UserID, "bh", "task")
+}
+
+func (o *BHOptions) getNotification() string {
+	return fmt.Sprintf("<@%v> %v are ready!", o.IDs.UserID, o.getName())
+}
+
+func (o *BHOptions) getPattern() *regexp.Regexp {
+	str := fmt.Sprintf(`<@(?P<userId>\d+)> %v are ready!`, o.getName())
+	return regexp.MustCompile(str)
+}
+
+func (o *BHOptions) parseNotification(m *discordgo.Message) (err error) {
+	o.IDs = triggerFromMessage(m)
+	groups := parseNotifier(m, o)
+
+	for k, v := range groups {
+		if k == "userId" {
+			o.IDs.UserID = v
 		}
-		return
 	}
-	err = sendBH(options)
-	if err != nil {
-		return
-	}
-	return
+
+	return o.validate()
 }
 
-func sendBH(o *BHOptions) (err error) {
-	taskKey := formatKey(o.UserID, "bh", "task")
-	err = cancelTask(taskKey)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	content := fmt.Sprintf("<@%v> Bird houses are ready!", o.UserID)
-	wait := time.Duration(o.Seeds) * 5 * time.Minute
-	task, err := publishMessage(
-		&Message{
-			ChannelID:   o.ChannelID,
-			MessageSend: &discordgo.MessageSend{Content: content},
-			Reaction:    "🔁",
-			FollowUp: &FollowUp{
-				ChannelID: o.ChannelID,
-				UserID:    o.UserID,
-				Type:      "bird houses",
-				Key:       taskKey,
-				Wait:      5 * time.Minute,
-			}},
-		bokchoy.WithCountdown(wait))
+func (o *BHOptions) parse(m *discordgo.Message) (err error) {
+	err = parseMessage(m, o.Args)
 	if err != nil {
 		return
 	}
-	client.Set(taskKey, task.ID, wait)
-	log.Println("set", taskKey, "=", task.ID)
-	reaction := &Reaction{
-		ChannelId: o.ChannelID,
-		MessageID: o.MessageID,
-		Emoji: &discordgo.Emoji{
-			ID: "✅",
-		},
-	}
-	_, err = publishReaction(reaction)
-	if err != nil {
-		return
-	}
-	return
-}
-
-func parseBH(str string, options *BHOptions) (err error) {
-	buf := new(bytes.Buffer)
-	cmd := flag.NewFlagSet("bh", flag.ContinueOnError)
-	cmd.SetOutput(buf)
-	cmd.IntVar(&options.Seeds, "s", 10, "Number of seeds left.")
-	err = cmd.Parse(splitCommand(str, "bh"))
-	if err != nil {
-		err = errors.Errorf("%v", buf.String())
-		return
-	}
-	return options.validate()
+	o.IDs = triggerFromMessage(m)
+	return o.validate()
 }
 
 func (options *BHOptions) validate() (err error) {
 	switch {
-	case options.Seeds > 0 && options.Seeds <= 10:
-	default:
+	case options.Args.Seeds < 0 || options.Args.Seeds > 10:
 		return errors.Errorf("Seeds must be between 1-10.")
+	default:
+		return
 	}
-	return
 }
 
-func NewBH() *BHOptions {
-	return &BHOptions{}
+func (o *BHOptions) repeat(mr *discordgo.MessageReactionAdd) error {
+	o.IDs = triggerFromReact(mr)
+	o.Args.Seeds = 10
+	return o.run()
+}
+
+func (o *BHOptions) getWait() time.Duration {
+	return time.Duration(o.Args.Seeds) * 5 * time.Minute
+}
+
+func (o *BHOptions) followUp() time.Duration {
+	return 5 * time.Minute
+}
+
+func (o *BHOptions) run() (err error) {
+	return publishAlert(o)
 }
