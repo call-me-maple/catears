@@ -67,6 +67,7 @@ func (pa *PatchAlert) getPattern() *regexp.Regexp {
 func (pa *PatchAlert) parseNotification(m *discordgo.Message) (err error) {
 	pa.IDs = triggerFromMessage(m)
 	groups := parseNotifier(m, pa)
+	pa.Args.Contract = false
 	for k, v := range groups {
 		switch k {
 		case "userId":

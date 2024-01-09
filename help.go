@@ -37,8 +37,7 @@ func matchesNotifcation(m *discordgo.Message, np NotificationPatterner) bool {
 func isCommand(m *discordgo.Message, keyword string) bool {
 	keyword = strings.ToLower(strings.TrimSpace(keyword))
 	content := strings.ToLower(m.Content)
-	return (strings.Contains(content, keyword+" ") || strings.HasSuffix(content, keyword)) &&
-		isBotMentioned(m.Mentions)
+	return (strings.Contains(content, keyword+" ") && isBotMentioned(m.Mentions))
 }
 
 func splitCommand(content, keyword string) []string {
@@ -128,7 +127,10 @@ func parseNotifier(m *discordgo.Message, n Notifier) map[string]string {
 	r := n.getPattern()
 	matches := r.FindStringSubmatch(m.Content)
 	for i, name := range r.SubexpNames() {
-		groups[name] = matches[i]
+		// don't add the full match or sub names when they are empty
+		if len(name) > 0 && len(matches[i]) > 0 {
+			groups[name] = matches[i]
+		}
 	}
 	return groups
 }
