@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"math/rand"
 	"regexp"
 	"time"
@@ -130,7 +129,6 @@ func (pa *PatchAlert) Repeat(mr *discordgo.MessageReactionAdd) error {
 func (pa *PatchAlert) Wait(now time.Time) time.Duration {
 	finish := pa.Patch.getTickTime(int64(pa.Offset), int64(pa.Args.Remainder), now)
 	wait := finish.Sub(now)
-	log.Printf("%v done in: %v at: %v\n", pa.Patch.Name(), wait, finish)
 	return wait
 }
 
