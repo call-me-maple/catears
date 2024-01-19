@@ -127,7 +127,7 @@ func Test_didYouMean(t *testing.T) {
 		{args{"wowee", []string{"xxxxxx", "qpqpqpqpqpq", ""}}, "", &NoSuggestionError{}},
 		{args{"birb", NewBH().Keywords()}, "", &MatchingError{}},
 		{args{"bir", NewBH().Keywords()}, "Did you mean? bird", nil},
-		{args{"bir", NewBH().Keywords()}, "Did you mean? bird", nil},
+		{args{"d", NewDrop().Keywords()}, "", &MatchingError{}},
 		{args{"", allKeywords}, "", &EmptySearchError{}},
 	}
 	for _, tt := range tests {
