@@ -125,14 +125,12 @@ func didYouMean(search string, words []string) (string, error) {
 		return suggestions[i].Distance < suggestions[j].Distance
 	})
 	switch {
-	case len(suggestions) < 1:
+	case len(suggestions) < 1 || suggestions[0].Distance >= 10:
 		return "", new(NoSuggestionError)
 	case suggestions[0].Target == search:
 		return "", new(MatchingError)
-	case suggestions[0].Distance < 10:
-		return fmt.Sprintf("Did you mean? %v", suggestions[0].Target), nil
 	default:
-		return "", new(NoSuggestionError)
+		return fmt.Sprintf("Did you mean? %v", suggestions[0].Target), nil
 	}
 }
 
