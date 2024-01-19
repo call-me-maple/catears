@@ -70,11 +70,6 @@ func (options *ConfigOptions) Parse(m *discordgo.Message) (err error) {
 	return
 }
 
-func (options *ConfigOptions) validate() error {
-	// TODO valididate config params
-	return nil
-}
-
 func getOffset(userID string) (offset int, err error) {
 	key := formatKey("config", userID, "offset")
 	result, _ := client.Get(key).Result()

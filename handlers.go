@@ -70,15 +70,14 @@ func processReaction(r *bokchoy.Request) (err error) {
 	}
 
 	for _, c := range initCommands() {
-		if mc, ok := c.(MessageCommand); ok && matchesKeyword(me.Content, mc) {
+		mc, okMess := c.(MessageCommand)
+		n, okNoti := c.(Notifier)
+		if okMess && matchesKeyword(me.Content, mc) {
 			err = mc.Parse(me)
-		}
-		if n, ok := c.(Notifier); ok && matchesNotifcation(me, n) {
+		} else if okNoti && matchesNotifcation(me, n) {
 			err = n.NotifyParse(me)
-		}
-		if err != nil {
-			log.Println(err)
-			return
+		} else {
+			continue
 		}
 
 		if r, ok := c.(Repeater); ok && mr.Emoji.Name == "🔁" && isUserMentioned(me.Mentions, mr.UserID) {
@@ -135,7 +134,6 @@ func processMessage(r *bokchoy.Request) (err error) {
 		if err != nil || responded {
 			return err
 		}
-		log.Printf("%v", prepCommand(m.Content))
 		guess, err := didYouMean(prepCommand(m.Content)[0], keywords)
 		if err != nil {
 			return err
