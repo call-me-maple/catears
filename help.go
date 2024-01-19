@@ -189,6 +189,9 @@ func parseNotifier(content string, n Notifier) map[string]string {
 	groups := make(map[string]string)
 	r := n.NotifyPattern()
 	matches := r.FindStringSubmatch(content)
+	if len(r.SubexpNames()) != len(matches) {
+		return groups
+	}
 	for i, name := range r.SubexpNames() {
 		// don't add the full match or sub names when they are empty
 		if len(name) > 0 && len(matches[i]) > 0 {
