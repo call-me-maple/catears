@@ -58,7 +58,7 @@ func (o *BHOptions) NotifyParse(m *discordgo.Message) (err error) {
 }
 
 func (o *BHOptions) Parse(m *discordgo.Message) (err error) {
-	err = parseMessage(m.Content, o)
+	err = parseCommand(m.Content, o)
 	if err != nil {
 		return
 	}

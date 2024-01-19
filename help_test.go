@@ -64,7 +64,7 @@ func Test_parseMessage(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run("parsing messagess", func(t *testing.T) {
-			if err := parseMessage(tt.args.m, tt.args.args); (err != nil) != tt.wantErr {
+			if err := parseCommand(tt.args.m, tt.args.args); (err != nil) != tt.wantErr {
 				t.Errorf("parseMessage() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 
@@ -70,13 +71,12 @@ func processReaction(r *bokchoy.Request) (err error) {
 	}
 
 	for _, c := range initCommands() {
-		mc, okMess := c.(MessageCommand)
-		n, okNoti := c.(Notifier)
-		if okMess && matchesKeyword(me.Content, mc) {
-			err = mc.Parse(me)
-		} else if okNoti && matchesNotifcation(me, n) {
-			err = n.NotifyParse(me)
-		} else {
+		rc, ok := c.(ReactCommand)
+		if !ok {
+			continue
+		}
+		err = parseMessage(me, rc)
+		if err != nil {
 			continue
 		}
 
@@ -113,19 +113,20 @@ func processMessage(r *bokchoy.Request) (err error) {
 			continue
 		}
 
-		if !matchesKeyword(m.Content, mc) {
-			keywords = append(keywords, mc.Keywords()...)
-			continue
-		}
-		err = mc.Parse(m)
-		if err != nil {
+		err := parseMessage(m, mc)
+		switch err.(type) {
+		case UserInputError:
 			_, err = publishMessage(&Message{
 				ChannelID:   m.ChannelID,
-				MessageSend: &discordgo.MessageSend{Content: fmt.Sprintf("%v", err)},
+				MessageSend: &discordgo.MessageSend{Content: errors.Unwrap(err).Error()},
 			})
 			return err
+		case NothingTodoError:
+			keywords = append(keywords, mc.Keywords()...)
+			continue
+		case nil:
+			return mc.Run()
 		}
-		return mc.Run()
 	}
 	if isBotMentioned(m.Mentions) {
 		responded, err := respondToMention(m)

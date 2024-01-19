@@ -39,7 +39,7 @@ func (o *ReadyerOptions) getIDs() *DiscordTrigger {
 }
 
 func (o *ReadyerOptions) Parse(m *discordgo.Message) (err error) {
-	err = parseMessage(m.Content, o.Args)
+	err = parseCommand(m.Content, o.Args)
 	if err != nil {
 		return
 	}

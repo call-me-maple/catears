@@ -89,7 +89,7 @@ func (pa *PatchAlert) NotifyParse(m *discordgo.Message) (err error) {
 }
 
 func (pa *PatchAlert) Parse(m *discordgo.Message) (err error) {
-	err = parseMessage(m.Content, pa.Args)
+	err = parseCommand(m.Content, pa.Args)
 	if err != nil {
 		return
 	}
@@ -106,6 +106,9 @@ func (pa *PatchAlert) Parse(m *discordgo.Message) (err error) {
 }
 
 func (pa *PatchAlert) validate() error {
+	if pa.Args.Remainder == 0 {
+		pa.Args.Remainder = pa.Patch.Stages() - pa.Args.Stage
+	}
 	switch {
 	// Minus 1 from Stages() because the crops are finished growing at Stages() return value.
 	// Need to grow for at least one tick.

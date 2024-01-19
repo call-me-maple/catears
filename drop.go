@@ -51,6 +51,9 @@ func (o *DropOptions) NotifyPattern() *regexp.Regexp {
 
 // TODO: This func was copy pasted no cahnge. move somewhere else
 func (o *DropOptions) NotifyParse(m *discordgo.Message) (err error) {
+	if !matchesNotifcation(m, o) {
+		return NothingTodoError{}
+	}
 	o.IDs = triggerFromMessage(m)
 	groups := parseNotifier(m.Content, o)
 
@@ -71,7 +74,10 @@ func (o *DropOptions) NotifyParse(m *discordgo.Message) (err error) {
 }
 
 func (o *DropOptions) Parse(m *discordgo.Message) (err error) {
-	err = parseMessage(m.Content, o.Args)
+	if !matchesKeyword(m.Content, o) {
+		return NothingTodoError{}
+	}
+	err = parseCommand(m.Content, o.Args)
 	if err != nil {
 		return
 	}

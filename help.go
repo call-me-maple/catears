@@ -52,6 +52,35 @@ func matchesNotifcation(m *discordgo.Message, np NotifyPatterner) bool {
 		m.Author.ID == dg.State.User.ID
 }
 
+type UserInputError struct{}
+
+func (UserInputError) Error() string {
+	return "couldnt parse your message.."
+}
+
+type NothingTodoError struct{}
+
+func (NothingTodoError) Error() string {
+	return "i couldnt find anything to so with ur message"
+}
+
+func parseMessage(m *discordgo.Message, mc MessageCommand) error {
+	matches := matchesKeyword(m.Content, mc)
+	err := mc.Parse(m)
+	if err == nil && matches {
+		return nil
+	}
+
+	if rc, ok := mc.(ReactCommand); ok {
+		err = rc.NotifyParse(m)
+		matches = matches || matchesNotifcation(m, rc)
+	}
+	if !matches {
+		return NothingTodoError{}
+	}
+	return err
+}
+
 func splitCommand(content, keyword string) []string {
 	str := strings.TrimSpace(content)
 	_, after, _ := strings.Cut(str, keyword+" ")
@@ -143,7 +172,7 @@ func initCommands() (commands []Command) {
 	return commands
 }
 
-func parseMessage(content string, args interface{}) error {
+func parseCommand(content string, args interface{}) error {
 	arg.Parse(args)
 	p, err := arg.NewParser(arg.Config{
 		IgnoreEnv: true,

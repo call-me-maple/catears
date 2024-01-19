@@ -50,9 +50,7 @@ type ReactCommand interface {
 	MessageCommand
 	Notifier
 }
-type Statuser interface {
-	StatusKey() string
-}
+
 type Waiter interface {
 	Wait(time.Time) time.Duration
 }
@@ -66,6 +64,9 @@ type Alerter interface {
 	DiscordTriggerer
 	Waiter
 	FollowUper
+}
+type Statuser interface {
+	StatusKey() string
 }
 type Repeater interface {
 	Repeat(*discordgo.MessageReactionAdd) error
