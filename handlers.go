@@ -92,8 +92,6 @@ func processReaction(r *bokchoy.Request) (err error) {
 
 func processMessage(r *bokchoy.Request) (err error) {
 	res := fmt.Sprintf("%v", r.Task.Payload)
-
-	// Populate MessageCreate with values
 	mc := new(discordgo.MessageCreate)
 	err = mc.UnmarshalJSON([]byte(res))
 	if err != nil {

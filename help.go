@@ -153,7 +153,6 @@ func parseMessage(content string, args interface{}) error {
 		return err
 	}
 	err = p.Parse(prepCommand(content))
-	log.Printf("%v:%v\n", content, err)
 	return err
 }
 
