@@ -117,7 +117,6 @@ func processMessage(r *bokchoy.Request) (err error) {
 		}
 
 		if !matchesKeyword(m.Content, mc) {
-			log.Printf("%v doesnt matched %v\n", m.Content, mc.Keywords())
 			keywords = append(keywords, mc.Keywords()...)
 			continue
 		}

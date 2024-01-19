@@ -70,3 +70,7 @@ type Alerter interface {
 type Repeater interface {
 	Repeat(*discordgo.MessageReactionAdd) error
 }
+
+type Tiggerer interface {
+	Respond(interface{})
+}

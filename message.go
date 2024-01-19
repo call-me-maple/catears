@@ -21,6 +21,44 @@ type Message struct {
 	Reaction    string
 }
 
+type DiscordMessage struct {
+	ChannelID   string
+	MessageSend *discordgo.MessageSend
+	FollowUp    *FollowUp
+	Reaction    string
+}
+
+func NewDiscordMessage() DiscordMessage {
+	return DiscordMessage{
+		ChannelID:   "",
+		MessageSend: new(discordgo.MessageSend),
+		FollowUp:    new(FollowUp),
+		Reaction:    "",
+	}
+}
+
+// todo withOption ... stuff
+
+func (m DiscordMessage) WithReaction(react string) DiscordMessage {
+	m.Reaction = react
+	return m
+}
+
+func (m DiscordMessage) WithFollowUp(followUp *FollowUp) DiscordMessage {
+	m.FollowUp = followUp
+	return m
+}
+
+func (m DiscordMessage) WithMessageSend(send *discordgo.MessageSend) DiscordMessage {
+	m.MessageSend = send
+	return m
+}
+
+func (m DiscordMessage) WithChannelID(id string) DiscordMessage {
+	m.ChannelID = id
+	return m
+}
+
 type DiscordTrigger struct {
 	ChannelID string
 	MessageID string
