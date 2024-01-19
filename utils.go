@@ -19,16 +19,6 @@ func isUserMentioned(mentions []*discordgo.User, userID string) bool {
 	return false
 }
 
-func findMentionedUser(mentions []*discordgo.User) (*discordgo.User, error) {
-	switch len(mentions) {
-	case 1:
-		return mentions[0], nil
-	case 0:
-		return nil, fmt.Errorf("no user mentioned")
-	}
-	return nil, fmt.Errorf("multiple users mentioned")
-}
-
 func findChannel(channels []*discordgo.Channel, name string) (ch *discordgo.Channel, err error) {
 	for _, channel := range channels {
 		if channel.Name == name {
@@ -45,4 +35,12 @@ func countReactions(mr []*discordgo.MessageReactions, emoji string) (c int) {
 		}
 	}
 	return
+}
+func hasBotReacted(mr []*discordgo.MessageReactions, emoji string) bool {
+	for _, r := range mr {
+		if r.Emoji.Name == emoji && r.Me {
+			return true
+		}
+	}
+	return false
 }

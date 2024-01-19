@@ -70,37 +70,23 @@ func processReaction(r *bokchoy.Request) (err error) {
 	}
 
 	for _, c := range initCommands() {
-		rc, ok := c.(ReactCommand)
-		if !ok {
-			continue
+		if mc, ok := c.(MessageCommand); ok && matchesKeyword(me.Content, mc) {
+			err = mc.Parse(me)
 		}
-
-		switch {
-		case matchesKeyword(me, rc):
-			log.Printf("reacted:%v keyword matchh\n", mr.Emoji.Name)
-			err = rc.parse(me)
-		case matchesNotifcation(me, rc):
-			log.Printf("reacted:%v notif matchh\n", mr.Emoji.Name)
-			err = rc.parseNotification(me)
-		default:
-			continue
+		if n, ok := c.(Notifier); ok && matchesNotifcation(me, n) {
+			err = n.NotifyParse(me)
 		}
 		if err != nil {
 			log.Println(err)
 			return
 		}
 
-		if r, ok := rc.(Repeater); ok && mr.Emoji.Name == "🔁" && isUserMentioned(me.Mentions, mr.UserID) {
-			return r.repeat(mr)
+		if r, ok := c.(Repeater); ok && mr.Emoji.Name == "🔁" && isUserMentioned(me.Mentions, mr.UserID) {
+			return r.Repeat(mr)
 		}
-		if s, ok := rc.(Statuser); ok && mr.Emoji.Name == "❓" {
-			return sendStatus(me, s.getStatusKey())
+		if s, ok := c.(Statuser); ok && mr.Emoji.Name == "❓" {
+			return sendStatus(me, s.StatusKey())
 		}
-	}
-
-	// Count-down ready check
-	if isCommand(me, "r?") && allReady(me.Reactions) {
-		err = countDown(me)
 	}
 	return
 }
@@ -130,11 +116,12 @@ func processMessage(r *bokchoy.Request) (err error) {
 			continue
 		}
 
-		if !matchesKeyword(m, mc) {
-			keywords = append(keywords, mc.getKeywords()...)
+		if !matchesKeyword(m.Content, mc) {
+			log.Printf("%v doesnt matched %v\n", m.Content, mc.Keywords())
+			keywords = append(keywords, mc.Keywords()...)
 			continue
 		}
-		err = mc.parse(m)
+		err = mc.Parse(m)
 		if err != nil {
 			_, err = publishMessage(&Message{
 				ChannelID:   m.ChannelID,
@@ -142,22 +129,25 @@ func processMessage(r *bokchoy.Request) (err error) {
 			})
 			return err
 		}
-		return mc.run()
+		return mc.Run()
 	}
 	if isBotMentioned(m.Mentions) {
 		responded, err := respondToMention(m)
 		if err != nil || responded {
 			return err
 		}
-
-		err = didYouMean(prepCommand(m)[0], keywords)
+		log.Printf("%v", prepCommand(m.Content))
+		guess, err := didYouMean(prepCommand(m.Content)[0], keywords)
 		if err != nil {
-			_, err = publishMessage(&Message{
-				ChannelID:   m.ChannelID,
-				MessageSend: &discordgo.MessageSend{Content: fmt.Sprintf("%v", err)},
-			})
+			return err
 		}
-		return err
+		_, err = publishMessage(&Message{
+			ChannelID:   m.ChannelID,
+			MessageSend: &discordgo.MessageSend{Content: guess},
+		})
+		if err != nil {
+			return err
+		}
 	}
 	return lookForMemes(m)
 }

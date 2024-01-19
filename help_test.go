@@ -1,29 +1,71 @@
 package main
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
 	"github.com/bwmarrin/discordgo"
 )
 
-func Test_isCommand(t *testing.T) {
+var botID = "979903606901866537"
+var allKeywords []string
+
+func init() {
+	testDg := &discordgo.Session{
+		State: &discordgo.State{
+			Ready: discordgo.Ready{
+				User: &discordgo.User{ID: botID},
+			},
+		},
+	}
+	dg = testDg
+
+	for _, cmd := range initCommands() {
+		if kp, ok := cmd.(KeywordProvider); ok {
+			allKeywords = append(allKeywords, kp.Keywords()...)
+		}
+	}
+}
+
+func Test_parseNotifier(t *testing.T) {
 	type args struct {
-		m       *discordgo.Message
-		keyword string
+		m string
+		n Notifier
 	}
 	tests := []struct {
-		name string
 		args args
-		want bool
+		want map[string]string
 	}{
-		// TODO: Add test cases.
-		{"words before", args{&discordgo.Message{Content: "@<979903606901866537> hii ce red"}, "drop"}, true},
+		{args{"<@316007672510021634> herbs are grown!", NewPatchAlert()}, map[string]string{"userId": "316007672510021634", "patch": "herbs"}},
+		{args{"<@316007672510021634> herbs are grown! Contract is ready!", NewPatchAlert()}, map[string]string{"contract": "Contract", "userId": "316007672510021634", "patch": "herbs"}},
+		{args{"<@316007672510021634> herbs are grown! Contract is ready! Tell Jane I say ..hiii..", NewPatchAlert()}, map[string]string{"contract": "Contract", "userId": "316007672510021634", "patch": "herbs"}},
+	}
+
+	for _, tt := range tests {
+		t.Run("matching notifys", func(t *testing.T) {
+			if got := parseNotifier(tt.args.m, tt.args.n); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("parseNotifier() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_parseMessage(t *testing.T) {
+	type args struct {
+		m    string
+		args interface{}
+	}
+	tests := []struct {
+		args    args
+		wantErr bool
+	}{
+		{args{fmt.Sprintf("<@%v> bh -s 9", botID), NewBH()}, false},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := isCommand(tt.args.m, tt.args.keyword); got != tt.want {
-				t.Errorf("isCommand() = %v, want %v", got, tt.want)
+		t.Run("parsing messagess", func(t *testing.T) {
+			if err := parseMessage(tt.args.m, tt.args.args); (err != nil) != tt.wantErr {
+				t.Errorf("parseMessage() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
@@ -31,44 +73,72 @@ func Test_isCommand(t *testing.T) {
 
 func Test_matchesKeyword(t *testing.T) {
 	type args struct {
-		m  *discordgo.Message
-		kp KeywordProvider
+		content string
+		mc      MessageCommand
 	}
 	tests := []struct {
-		name string
 		args args
 		want bool
 	}{
-		{"red?", args{&discordgo.Message{Content: "@<979903606901866537> red"}, &DropOptions{}}, false},
+		{args{fmt.Sprintf("<@%v> bh", botID), NewBH()}, true},
+		{args{fmt.Sprintf("<@%v> wow", botID), NewBH()}, false},
+
+		{args{fmt.Sprintf("<@%v> config", botID), NewConfig()}, true},
+		{args{fmt.Sprintf("<@%v> wow", botID), NewConfig()}, false},
+
+		{args{fmt.Sprintf("<@%v> d", botID), NewDrop()}, true},
+		{args{fmt.Sprintf("<@%v> wow", botID), NewDrop()}, false},
+
+		{args{fmt.Sprintf("<@%v> herb", botID), NewPatchAlert()}, true},
+		{args{fmt.Sprintf("<@%v> wow", botID), NewPatchAlert()}, false},
+
+		{args{fmt.Sprintf("<@%v> r?", botID), NewReadyer()}, true},
+		{args{fmt.Sprintf("<@%v> rrr", botID), NewReadyer()}, false},
+		{args{fmt.Sprintf("<@%v> rrr 100", botID), NewReadyer()}, false},
+		{args{fmt.Sprintf("<@%v> ready?", botID), NewReadyer()}, true},
+		{args{fmt.Sprintf("<@%v> rrrrrr? 100", botID), NewReadyer()}, false},
+
+		{args{fmt.Sprintf("<@%v> herb things after the word -s 2", botID), NewPatchAlert()}, true},
+		{args{"<@10101010101> bh", NewBH()}, false},
+		{args{fmt.Sprintf("<@%v>maple", botID), NewPatchAlert()}, false},
+		{args{fmt.Sprintf("<@%v> maple   ", botID), NewPatchAlert()}, true},
+		{args{fmt.Sprintf("maple <@%v>", botID), NewPatchAlert()}, false},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := matchesKeyword(tt.args.m, tt.args.kp); got != tt.want {
-				t.Errorf("matchesKeyword() = %v, want %v", got, tt.want)
+		t.Run("keyword matching", func(t *testing.T) {
+			if got := matchesKeyword(tt.args.content, tt.args.mc); got != tt.want {
+				t.Errorf("matchesKeyword(%v %v) = %v, want %v", tt.args.content, tt.args.mc.Keywords()[:5], got, tt.want)
 			}
 		})
 	}
 }
 
-func Test_parseNotifier(t *testing.T) {
+func Test_didYouMean(t *testing.T) {
 	type args struct {
-		m *discordgo.Message
-		n Notifier
+		search string
+		words  []string
 	}
 	tests := []struct {
-		name string
-		args args
-		want map[string]string
+		args    args
+		want    string
+		wantErr error
 	}{
-		{"dont include empty matches", args{&discordgo.Message{Content: "<@316007672510021634> herbs are grown!"}, NewPatchAlert()}, map[string]string{"userId": "316007672510021634", "patch": "herbs"}},
-		{"contract parse", args{&discordgo.Message{Content: "<@316007672510021634> herbs are grown! Contract is ready!"}, NewPatchAlert()}, map[string]string{"contract": "Contract", "userId": "316007672510021634", "patch": "herbs"}},
-		{"eggy contract parse", args{&discordgo.Message{Content: "<@316007672510021634> herbs are grown! Contract is ready! Tell Jane I say ..hiii.."}, NewPatchAlert()}, map[string]string{"contract": "Contract", "userId": "316007672510021634", "patch": "herbs"}},
+		{args{"", []string{}}, "", &EmptySearchError{}},
+		{args{"wowee", []string{"xxxxxx", "qpqpqpqpqpq", ""}}, "", &NoSuggestionError{}},
+		{args{"birb", NewBH().Keywords()}, "", &MatchingError{}},
+		{args{"bir", NewBH().Keywords()}, "Did you mean? bird", nil},
+		{args{"bir", NewBH().Keywords()}, "Did you mean? bird", nil},
+		{args{"", allKeywords}, "", &EmptySearchError{}},
 	}
-
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := parseNotifier(tt.args.m, tt.args.n); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("parseNotifier() = %v, want %v", got, tt.want)
+		t.Run("mae", func(t *testing.T) {
+			got, err := didYouMean(tt.args.search, tt.args.words)
+			if err != tt.wantErr {
+				t.Errorf("didYouMean() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("didYouMean() = %v, want %v", got, tt.want)
 			}
 		})
 	}

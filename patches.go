@@ -283,10 +283,10 @@ func (p PatchType) Name() string {
 	return "undefined"
 }
 
-func (p PatchType) getTickTime(offset, ticks int64) time.Time {
+func (p PatchType) getTickTime(offset, ticks int64, now time.Time) time.Time {
 	tickRate := int64(p.TickRate().Minutes())
 	calcOffset := (offset % tickRate * 60)
-	unixNow := time.Now().Unix() + calcOffset
+	unixNow := now.Unix() + calcOffset
 
 	currentTick := (unixNow - (unixNow % (tickRate * 60)))
 	goalTick := currentTick + (ticks * tickRate * 60)

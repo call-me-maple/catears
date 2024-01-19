@@ -29,11 +29,11 @@ type PatchOptions struct {
 	Remainder uint   `arg:"-r" default:"0"`
 }
 
-func (pa *PatchAlert) getName() string {
+func (pa *PatchAlert) Name() string {
 	return pa.Patch.Name()
 }
 
-func (pa *PatchAlert) getKeywords() []string {
+func (pa *PatchAlert) Keywords() []string {
 	return AllPatchNames()
 }
 
@@ -41,7 +41,7 @@ func (pa *PatchAlert) getIDs() *DiscordTrigger {
 	return pa.IDs
 }
 
-func (pa *PatchAlert) getStatusKey() string {
+func (pa *PatchAlert) StatusKey() string {
 	keys := []string{pa.IDs.UserID, pa.Patch.Name(), "task"}
 	if pa.Args.Contract {
 		keys = []string{pa.IDs.UserID, "jane", "task"}
@@ -49,7 +49,7 @@ func (pa *PatchAlert) getStatusKey() string {
 	return formatKey(keys...)
 }
 
-func (pa *PatchAlert) getNotification() string {
+func (pa *PatchAlert) NotifyMessage() string {
 	content := fmt.Sprintf("<@%v> %v are grown!", pa.IDs.UserID, pa.Patch.Name())
 	if pa.Args.Contract {
 		content += " Contract is ready!"
@@ -60,13 +60,13 @@ func (pa *PatchAlert) getNotification() string {
 	return content
 }
 
-func (pa *PatchAlert) getPattern() *regexp.Regexp {
+func (pa *PatchAlert) NotifyPattern() *regexp.Regexp {
 	return regexp.MustCompile(`<@(?P<userId>\d+)> (?P<patch>\w+) are grown!\s?(?P<contract>Contract)?.*`)
 }
 
-func (pa *PatchAlert) parseNotification(m *discordgo.Message) (err error) {
+func (pa *PatchAlert) NotifyParse(m *discordgo.Message) (err error) {
 	pa.IDs = triggerFromMessage(m)
-	groups := parseNotifier(m, pa)
+	groups := parseNotifier(m.Content, pa)
 	pa.Args.Contract = false
 	for k, v := range groups {
 		switch k {
@@ -89,8 +89,8 @@ func (pa *PatchAlert) parseNotification(m *discordgo.Message) (err error) {
 	return pa.validate()
 }
 
-func (pa *PatchAlert) parse(m *discordgo.Message) (err error) {
-	err = parseMessage(m, pa.Args)
+func (pa *PatchAlert) Parse(m *discordgo.Message) (err error) {
+	err = parseMessage(m.Content, pa.Args)
 	if err != nil {
 		return
 	}
@@ -122,19 +122,19 @@ func (pa *PatchAlert) validate() error {
 	}
 }
 
-func (pa *PatchAlert) repeat(mr *discordgo.MessageReactionAdd) error {
+func (pa *PatchAlert) Repeat(mr *discordgo.MessageReactionAdd) error {
 	pa.IDs = triggerFromReact(mr)
-	return pa.run()
+	return pa.Run()
 }
 
-func (pa *PatchAlert) getWait() time.Duration {
-	finish := pa.Patch.getTickTime(int64(pa.Offset), int64(pa.Args.Remainder))
-	wait := time.Until(finish)
+func (pa *PatchAlert) Wait(now time.Time) time.Duration {
+	finish := pa.Patch.getTickTime(int64(pa.Offset), int64(pa.Args.Remainder), now)
+	wait := finish.Sub(now)
 	log.Printf("%v done in: %v at: %v\n", pa.Patch.Name(), wait, finish)
 	return wait
 }
 
-func (pa *PatchAlert) followUp() time.Duration {
+func (pa *PatchAlert) FollowUp() time.Duration {
 	if pa.Args.Contract {
 		return 5 * time.Minute
 	}
@@ -146,6 +146,6 @@ func (pa *PatchAlert) followUp() time.Duration {
 	return wait
 }
 
-func (pa *PatchAlert) run() error {
+func (pa *PatchAlert) Run() error {
 	return publishAlert(pa)
 }

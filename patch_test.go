@@ -7,35 +7,6 @@ import (
 )
 
 var IDs = &DiscordTrigger{ChannelID: "3333", MessageID: "222222", UserID: "11111"}
-var alerts = []PatchAlert{
-	PatchAlert{IDs: IDs, Offset: 0, Patch: Herb, Args: &PatchOptions{
-		Patch: "herb", Contract: true, Stage: 1, Remainder: 0}},
-	PatchAlert{IDs: IDs, Offset: 0, Patch: Flower, Args: &PatchOptions{
-		Patch: "flower", Contract: true, Stage: 1, Remainder: 0}},
-	PatchAlert{IDs: IDs, Offset: 0, Patch: Whiteberries, Args: &PatchOptions{
-		Patch: "wb", Contract: true, Stage: 1, Remainder: 0}},
-	PatchAlert{IDs: IDs, Offset: 0, Patch: Watermelon, Args: &PatchOptions{
-		Patch: "melon", Contract: true, Stage: 1, Remainder: 0}},
-}
-
-func TestPatchAlert_getWait(t *testing.T) {
-	tests := []struct {
-		pa   *PatchAlert
-		want time.Duration
-	}{
-		{&PatchAlert{Patch: Watermelon, Offset: 0, Args: &PatchOptions{Remainder: 3}}, 5 * time.Minute},
-		{&PatchAlert{Patch: Herb, Offset: 20, Args: &PatchOptions{Remainder: 4}}, 10 * time.Minute},
-		{&PatchAlert{Patch: Palm, Offset: 30, Args: &PatchOptions{Remainder: 2}}, 20 * time.Minute},
-		{&PatchAlert{Patch: Magic, Offset: 19, Args: &PatchOptions{Remainder: 1}}, 5 * time.Minute},
-	}
-	for _, tt := range tests {
-		t.Run("waiter", func(t *testing.T) {
-			if got := tt.pa.getWait(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("PatchAlert.getWait() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
 
 func TestPatchAlert_followUp(t *testing.T) {
 	tests := []struct {
@@ -49,8 +20,33 @@ func TestPatchAlert_followUp(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run("follow up", func(t *testing.T) {
-			if got := tt.pa.followUp(); !reflect.DeepEqual(got, tt.want) {
+			if got := tt.pa.FollowUp(); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("PatchAlert.followUp() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+var now = time.Date(2024, time.January, 18, 17, 0, 0, 0, time.UTC)
+
+func TestPatchAlert_Wait(t *testing.T) {
+	type args struct {
+		now time.Time
+	}
+	tests := []struct {
+		pa   *PatchAlert
+		args args
+		want time.Duration
+	}{
+		{&PatchAlert{Patch: Watermelon, Offset: 0, Args: &PatchOptions{Remainder: 3}}, args{now}, 30 * time.Minute},
+		{&PatchAlert{Patch: Herb, Offset: 20, Args: &PatchOptions{Remainder: 4}}, args{now}, 80 * time.Minute},
+		{&PatchAlert{Patch: Palm, Offset: 30, Args: &PatchOptions{Remainder: 2}}, args{now}, (60*3 + 50) * time.Minute},
+		{&PatchAlert{Patch: Magic, Offset: 19, Args: &PatchOptions{Remainder: 1}}, args{now}, 1 * time.Minute},
+	}
+	for _, tt := range tests {
+		t.Run("waiter", func(t *testing.T) {
+			if got := tt.pa.Wait(tt.args.now); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("PatchAlert.Wait() = %v, want %v", got, tt.want)
 			}
 		})
 	}

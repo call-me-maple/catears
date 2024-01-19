@@ -8,20 +8,20 @@ import (
 )
 
 type Runner interface {
-	run() error
+	Run() error
 }
 type Namer interface {
-	getName() string
+	Name() string
 }
 type Command interface {
 	Runner
 	Namer
 }
 type Parser interface {
-	parse(*discordgo.Message) error
+	Parse(*discordgo.Message) error
 }
 type KeywordProvider interface {
-	getKeywords() []string
+	Keywords() []string
 }
 type DiscordTriggerer interface {
 	getIDs() *DiscordTrigger
@@ -32,32 +32,32 @@ type MessageCommand interface {
 	KeywordProvider
 	DiscordTriggerer
 }
-type NotificationPatterner interface {
-	getPattern() *regexp.Regexp
+type NotifyPatterner interface {
+	NotifyPattern() *regexp.Regexp
 }
-type NotificationProvider interface {
-	getNotification() string
+type NotifyProvider interface {
+	NotifyMessage() string
 }
-type NotificationParser interface {
-	parseNotification(*discordgo.Message) error
+type NotifyParser interface {
+	NotifyParse(*discordgo.Message) error
 }
 type Notifier interface {
-	NotificationPatterner
-	NotificationProvider
-	NotificationParser
+	NotifyPatterner
+	NotifyProvider
+	NotifyParser
 }
 type ReactCommand interface {
 	MessageCommand
 	Notifier
 }
 type Statuser interface {
-	getStatusKey() string
+	StatusKey() string
 }
 type Waiter interface {
-	getWait() time.Duration
+	Wait(time.Time) time.Duration
 }
 type FollowUper interface {
-	followUp() time.Duration
+	FollowUp() time.Duration
 }
 type Alerter interface {
 	Namer
@@ -68,5 +68,5 @@ type Alerter interface {
 	FollowUper
 }
 type Repeater interface {
-	repeat(*discordgo.MessageReactionAdd) error
+	Repeat(*discordgo.MessageReactionAdd) error
 }

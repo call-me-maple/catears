@@ -10,24 +10,20 @@ import (
 )
 
 type BHOptions struct {
-	Args *BHArgs
-	IDs  *DiscordTrigger
-}
-
-type BHArgs struct {
-	Trigger string `arg:"positional"` // Word thats triggering this cmd
-	Seeds   int    `arg:"-s" default:"10"`
+	Trigger string          `arg:"positional"` // Word thats triggering this cmd
+	Seeds   int             `arg:"-s" default:"10"`
+	IDs     *DiscordTrigger `arg:"-"` // interface trigger with function to respond with output
 }
 
 func NewBH() *BHOptions {
-	return &BHOptions{IDs: new(DiscordTrigger), Args: new(BHArgs)}
+	return &BHOptions{IDs: new(DiscordTrigger)}
 }
 
-func (o *BHOptions) getName() string {
+func (o *BHOptions) Name() string {
 	return "bird houses"
 }
 
-func (o *BHOptions) getKeywords() []string {
+func (o *BHOptions) Keywords() []string {
 	return []string{"bh", "bird", "house", "birdhouse", "birdhouses", "birb"}
 }
 
@@ -35,22 +31,22 @@ func (o *BHOptions) getIDs() *DiscordTrigger {
 	return o.IDs
 }
 
-func (o *BHOptions) getStatusKey() string {
+func (o *BHOptions) StatusKey() string {
 	return formatKey(o.IDs.UserID, "bh", "task")
 }
 
-func (o *BHOptions) getNotification() string {
-	return fmt.Sprintf("<@%v> %v are ready!", o.IDs.UserID, o.getName())
+func (o *BHOptions) NotifyMessage() string {
+	return fmt.Sprintf("<@%v> %v are ready!", o.IDs.UserID, o.Name())
 }
 
-func (o *BHOptions) getPattern() *regexp.Regexp {
-	str := fmt.Sprintf(`<@(?P<userId>\d+)> %v are ready!`, o.getName())
+func (o *BHOptions) NotifyPattern() *regexp.Regexp {
+	str := fmt.Sprintf(`<@(?P<userId>\d+)> %v are ready!`, o.Name())
 	return regexp.MustCompile(str)
 }
 
-func (o *BHOptions) parseNotification(m *discordgo.Message) (err error) {
+func (o *BHOptions) NotifyParse(m *discordgo.Message) (err error) {
 	o.IDs = triggerFromMessage(m)
-	groups := parseNotifier(m, o)
+	groups := parseNotifier(m.Content, o)
 
 	for k, v := range groups {
 		if k == "userId" {
@@ -61,8 +57,8 @@ func (o *BHOptions) parseNotification(m *discordgo.Message) (err error) {
 	return o.validate()
 }
 
-func (o *BHOptions) parse(m *discordgo.Message) (err error) {
-	err = parseMessage(m, o.Args)
+func (o *BHOptions) Parse(m *discordgo.Message) (err error) {
+	err = parseMessage(m.Content, o)
 	if err != nil {
 		return
 	}
@@ -70,29 +66,29 @@ func (o *BHOptions) parse(m *discordgo.Message) (err error) {
 	return o.validate()
 }
 
-func (options *BHOptions) validate() (err error) {
+func (o *BHOptions) validate() (err error) {
 	switch {
-	case options.Args.Seeds < 0 || options.Args.Seeds > 10:
+	case o.Seeds < 0 || o.Seeds > 10:
 		return errors.Errorf("Seeds must be between 1-10.")
 	default:
 		return
 	}
 }
 
-func (o *BHOptions) repeat(mr *discordgo.MessageReactionAdd) error {
+func (o *BHOptions) Repeat(mr *discordgo.MessageReactionAdd) error {
 	o.IDs = triggerFromReact(mr)
-	o.Args.Seeds = 10
-	return o.run()
+	o.Seeds = 10
+	return o.Run()
 }
 
-func (o *BHOptions) getWait() time.Duration {
-	return time.Duration(o.Args.Seeds) * 5 * time.Minute
+func (o *BHOptions) Wait(_ time.Time) time.Duration {
+	return time.Duration(o.Seeds) * 5 * time.Minute
 }
 
-func (o *BHOptions) followUp() time.Duration {
+func (o *BHOptions) FollowUp() time.Duration {
 	return 5 * time.Minute
 }
 
-func (o *BHOptions) run() (err error) {
+func (o *BHOptions) Run() (err error) {
 	return publishAlert(o)
 }

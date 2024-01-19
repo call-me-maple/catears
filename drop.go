@@ -24,35 +24,35 @@ func NewDrop() *DropOptions {
 	return &DropOptions{IDs: new(DiscordTrigger), Args: new(DropArgs)}
 }
 
-func (o *DropOptions) getName() string {
-	return o.getKeywords()[0]
+func (o *DropOptions) Name() string {
+	return o.Keywords()[0]
 }
 
 func (o *DropOptions) getIDs() *DiscordTrigger {
 	return o.IDs
 }
 
-func (o *DropOptions) getStatusKey() string {
+func (o *DropOptions) StatusKey() string {
 	return formatKey(o.IDs.UserID, "drop", "task")
 }
 
-func (o *DropOptions) getKeywords() []string {
+func (o *DropOptions) Keywords() []string {
 	return []string{"drops", "drop", "d", "meds"}
 }
 
-func (o *DropOptions) getNotification() string {
-	return fmt.Sprintf("<@%v> %v Placeholder %v :p", o.IDs.UserID, o.Args.Length, o.getName())
+func (o *DropOptions) NotifyMessage() string {
+	return fmt.Sprintf("<@%v> %v Placeholder %v :p", o.IDs.UserID, o.Args.Length, o.Name())
 }
 
-func (o *DropOptions) getPattern() *regexp.Regexp {
-	str := fmt.Sprintf(`<@(?P<userId>\d+)> (?P<length>\d+) Placeholder %v :p`, o.getName())
+func (o *DropOptions) NotifyPattern() *regexp.Regexp {
+	str := fmt.Sprintf(`<@(?P<userId>\d+)> (?P<length>\d+) Placeholder %v :p`, o.Name())
 	return regexp.MustCompile(str)
 }
 
 // TODO: This func was copy pasted no cahnge. move somewhere else
-func (o *DropOptions) parseNotification(m *discordgo.Message) (err error) {
+func (o *DropOptions) NotifyParse(m *discordgo.Message) (err error) {
 	o.IDs = triggerFromMessage(m)
-	groups := parseNotifier(m, o)
+	groups := parseNotifier(m.Content, o)
 
 	for k, v := range groups {
 		if k == "userId" {
@@ -70,8 +70,8 @@ func (o *DropOptions) parseNotification(m *discordgo.Message) (err error) {
 	return o.validate()
 }
 
-func (o *DropOptions) parse(m *discordgo.Message) (err error) {
-	err = parseMessage(m, o.Args)
+func (o *DropOptions) Parse(m *discordgo.Message) (err error) {
+	err = parseMessage(m.Content, o.Args)
 	if err != nil {
 		return
 	}
@@ -88,19 +88,19 @@ func (o *DropOptions) validate() (err error) {
 	}
 }
 
-func (o *DropOptions) repeat(mr *discordgo.MessageReactionAdd) error {
+func (o *DropOptions) Repeat(mr *discordgo.MessageReactionAdd) error {
 	o.IDs = triggerFromReact(mr)
-	return o.run()
+	return o.Run()
 }
 
-func (o *DropOptions) getWait() time.Duration {
+func (o *DropOptions) Wait(_ time.Time) time.Duration {
 	return time.Duration(o.Args.Length) * time.Hour
 }
 
-func (o *DropOptions) followUp() time.Duration {
+func (o *DropOptions) FollowUp() time.Duration {
 	return 10 * time.Minute
 }
 
-func (o *DropOptions) run() (err error) {
+func (o *DropOptions) Run() (err error) {
 	return publishAlert(o)
 }

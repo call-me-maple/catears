@@ -19,19 +19,19 @@ func NewConfig() *ConfigOptions {
 	return &ConfigOptions{IDs: new(DiscordTrigger)}
 }
 
-func (o *ConfigOptions) getName() string {
-	return o.getKeywords()[0]
+func (o *ConfigOptions) Name() string {
+	return o.Keywords()[0]
 }
 
 func (o *ConfigOptions) getIDs() *DiscordTrigger {
 	return o.IDs
 }
 
-func (o *ConfigOptions) getKeywords() []string {
+func (o *ConfigOptions) Keywords() []string {
 	return []string{"config"}
 }
 
-func (o *ConfigOptions) run() (err error) {
+func (o *ConfigOptions) Run() (err error) {
 	key := strings.Join([]string{"config", o.IDs.UserID, o.Key}, ":")
 	client.Set(key, o.Value, 0)
 	log.Println("set", key, "=", o.Value)
@@ -48,7 +48,7 @@ func (o *ConfigOptions) run() (err error) {
 }
 
 // @catears config key=value
-func (options *ConfigOptions) parse(m *discordgo.Message) (err error) {
+func (options *ConfigOptions) Parse(m *discordgo.Message) (err error) {
 	options.IDs.ChannelID = m.ChannelID
 	options.IDs.MessageID = m.ID
 	options.IDs.UserID = m.Author.ID
