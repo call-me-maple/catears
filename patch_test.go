@@ -28,6 +28,7 @@ func TestPatchAlert_followUp(t *testing.T) {
 }
 
 var now = time.Date(2024, time.January, 18, 17, 0, 0, 0, time.UTC)
+var sometime = time.Date(2024, time.January, 19, 18, 20, 18, 0, time.UTC)
 
 func TestPatchAlert_Wait(t *testing.T) {
 	type args struct {
@@ -42,11 +43,12 @@ func TestPatchAlert_Wait(t *testing.T) {
 		{&PatchAlert{Patch: Herb, Offset: 20, Args: &PatchOptions{Remainder: 4}}, args{now}, 80 * time.Minute},
 		{&PatchAlert{Patch: Palm, Offset: 30, Args: &PatchOptions{Remainder: 2}}, args{now}, (60*3 + 50) * time.Minute},
 		{&PatchAlert{Patch: Magic, Offset: 19, Args: &PatchOptions{Remainder: 1}}, args{now}, 1 * time.Minute},
+		{&PatchAlert{Patch: Celastrus, Offset: 29, Args: &PatchOptions{Contract: true, Stage: 5}}, args{sometime}, (60*150 + 42) * time.Second},
 	}
 	for _, tt := range tests {
 		t.Run("waiter", func(t *testing.T) {
 			if got := tt.pa.Wait(tt.args.now); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("PatchAlert.Wait() = %v, want %v", got, tt.want)
+				t.Errorf("PatchAlert.Wait(%v) = %v, want %v", tt.args.now, got, tt.want)
 			}
 		})
 	}

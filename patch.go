@@ -106,9 +106,6 @@ func (pa *PatchAlert) Parse(m *discordgo.Message) (err error) {
 }
 
 func (pa *PatchAlert) validate() error {
-	if pa.Args.Remainder == 0 {
-		pa.Args.Remainder = pa.Patch.Stages() - pa.Args.Stage
-	}
 	switch {
 	// Minus 1 from Stages() because the crops are finished growing at Stages() return value.
 	// Need to grow for at least one tick.
@@ -127,6 +124,10 @@ func (pa *PatchAlert) Repeat(mr *discordgo.MessageReactionAdd) error {
 }
 
 func (pa *PatchAlert) Wait(now time.Time) time.Duration {
+	if pa.Args.Remainder == 0 {
+		pa.Args.Remainder = pa.Patch.Stages() - pa.Args.Stage
+	}
+
 	finish := pa.Patch.getTickTime(int64(pa.Offset), int64(pa.Args.Remainder), now)
 	wait := finish.Sub(now)
 	return wait
