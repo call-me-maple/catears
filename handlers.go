@@ -115,20 +115,25 @@ func processMessage(r *bokchoy.Request) (err error) {
 
 		err := parseMessage(m, mc)
 		switch err.(type) {
+		// no error run the command
+		case nil:
+			return mc.Run()
+
+		// send the error message to user
 		case UserInputError:
 			_, err = publishMessage(&Message{
 				ChannelID:   m.ChannelID,
 				MessageSend: &discordgo.MessageSend{Content: errors.Unwrap(err).Error()},
 			})
 			return err
+		// todo change this: store keywords for did you mean?
 		case NothingTodoError:
 			keywords = append(keywords, mc.Keywords()...)
 			continue
-		case nil:
-			return mc.Run()
 		}
 	}
 	if isBotMentioned(m.Mentions) {
+		// todo respond to mention command
 		responded, err := respondToMention(m)
 		if err != nil || responded {
 			return err
@@ -145,6 +150,7 @@ func processMessage(r *bokchoy.Request) (err error) {
 			return err
 		}
 	}
+	// todo memes to command
 	return lookForMemes(m)
 }
 

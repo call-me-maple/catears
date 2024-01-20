@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"os"
@@ -13,6 +14,7 @@ import (
 	"github.com/alexflint/go-arg"
 	"github.com/bwmarrin/discordgo"
 	"github.com/lithammer/fuzzysearch/fuzzy"
+	"github.com/pkg/errors"
 )
 
 type cachedPattern struct {
@@ -181,8 +183,20 @@ func parseCommand(content string, args interface{}) error {
 	if err != nil {
 		return err
 	}
+
 	err = p.Parse(prepCommand(content))
-	return err
+	// todo could store help message inside UserInputError
+	switch err {
+	case nil:
+		return nil
+	case arg.ErrHelp:
+		var buf bytes.Buffer
+		p.WriteHelp(&buf)
+		err = errors.New(buf.String())
+		fallthrough
+	default:
+		return errors.Wrap(UserInputError{}, err.Error())
+	}
 }
 
 func parseNotifier(content string, n Notifier) map[string]string {

@@ -9,6 +9,7 @@ import (
 	"github.com/go-redis/redis/v7"
 	"github.com/oklog/run"
 	"github.com/thoas/bokchoy"
+	"github.com/thoas/bokchoy/logging"
 )
 
 var (
@@ -49,9 +50,8 @@ func main() {
 			Addr:     os.Getenv("REDIS_ADDR"),
 			Password: os.Getenv("REDIS_PASSWORD"),
 		})
-		// Logger nil seems weird
 		engine, err := bokchoy.New(ctx, bokchoy.Config{},
-			bokchoy.WithBroker(bokchoy.NewRedisBroker(client, "client", "", nil)))
+			bokchoy.WithBroker(bokchoy.NewRedisBroker(client, "client", "", logging.NewNopLogger())))
 		if err != nil {
 			log.Println("error opening redis connection,", err)
 			return

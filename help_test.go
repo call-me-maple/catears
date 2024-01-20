@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"testing"
@@ -58,13 +59,14 @@ func Test_parseMessage(t *testing.T) {
 	}
 	tests := []struct {
 		args    args
-		wantErr bool
+		wantErr error
 	}{
-		{args{fmt.Sprintf("<@%v> bh -s 9", botID), NewBH()}, false},
+		{args{fmt.Sprintf("<@%v> bh -s 9", botID), NewBH()}, nil},
+		{args{fmt.Sprintf("<@%v> herb -h", botID), NewBH()}, UserInputError{}},
 	}
 	for _, tt := range tests {
 		t.Run("parsing messagess", func(t *testing.T) {
-			if err := parseCommand(tt.args.m, tt.args.args); (err != nil) != tt.wantErr {
+			if err := parseCommand(tt.args.m, tt.args.args); !errors.Is(err, tt.wantErr) {
 				t.Errorf("parseMessage() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
